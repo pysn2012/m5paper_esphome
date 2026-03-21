@@ -25,11 +25,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install esphome
 
+      # 关键步骤：动态生成 secrets.yaml
+      - name: Generate secrets.yaml
+        run: |
+          cat > secrets.yaml <<EOF
+          wifi_ssid: "${{ secrets.WIFI_SSID }}"
+          wifi_password: "${{ secrets.WIFI_PASSWORD }}"
+          ota_key: "${{ secrets.OTA_KEY }}"
+          api_ha: "${{ secrets.API_HA_KEY }}"
+          EOF
+
       # 步骤4：编译m5paper_esphome固件
       - name: 编译固件
-        run: |
-          # 编译固件，生成bin文件
-          esphome compile m5paper_esphome.yaml
+        run: esphome compile m5paper_esphome.yaml
 
       # 步骤5：动态查找编译产物
       - name: 动态查找 firmware.bin
