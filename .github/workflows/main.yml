@@ -32,7 +32,7 @@ jobs:
           wifi_ssid: "${{ secrets.WIFI_SSID }}"
           wifi_password: "${{ secrets.WIFI_PASSWORD }}"
           ota_key: "${{ secrets.OTA_KEY }}"
-          api_encryption_key: "${{ secrets.API_ENCRYPTION_KEY }}"
+          api_encryption_key: "qLAW5pNOQIm4QEvuyEGpRskgDiFT4h1dT0lnqNr5RT8"
           EOF
 
       # 步骤4：编译m5paper_esphome固件
