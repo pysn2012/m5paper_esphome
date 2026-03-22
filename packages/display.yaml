@@ -7,7 +7,9 @@ display:
     cs_pin: GPIO15
     reset_pin: GPIO23
     reset_duration: 100ms
-    busy_pin: GPIO27
+    busy_pin:
+      number: GPIO27
+      mode: INPUT_PULLUP
     rotation: 90
     reversed: false
     model: M5EPD
