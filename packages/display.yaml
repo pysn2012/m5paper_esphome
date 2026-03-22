@@ -13,11 +13,10 @@ display:
     model: M5EPD
     update_interval: never
     lambda: |-
-            
       // ----- Sensor Aliases (Assign sensor IDs to local variables)
-      auto sensor_esp_temp    = id(m5paper_temperature);  // ESP temperature sensor (displayed in ROW 1, cell 2)
-      auto sensor_esp_hum     = id(m5paper_humidity);       // ESP humidity sensor (displayed in ROW 1, cell 3)
-      auto sensor_battery     = id(battery_level);          // Calculated battery level (displayed in ROW 1, cell 5)
+      auto sensor_esp_temp    = id(m5paper_temperature);
+      auto sensor_esp_hum     = id(m5paper_humidity);
+      auto sensor_battery     = id(battery_level);
     
       // ----- Icon Definitions (Icon glyphs from material_icons_map)
       std::string icon_thermo_orig   = id(material_icons_map)["mdi-thermometer"];
@@ -27,9 +26,7 @@ display:
            
       // ----- Layout Settings (constants for row height, text size, etc.)
       const int ROW_HEIGHT1      = 60;
-
       const int TEXT_SIZE        = 24;
-
       const int BASELINE_DELTA   = 30;
       auto center_text_y = [&](int row_top, int row_height, int font_size) -> int {
         return row_top + (row_height + font_size) / 2 - BASELINE_DELTA;
@@ -46,54 +43,56 @@ display:
       
       // =====================================================
       // ROW 1: Time | Temperature | Humidity | Uptime | Battery
-      // Displays current time, device temperature, humidity, uptime, and battery level.
-      draw_row(5, {95, 107, 108, 130, 100}, ROW_HEIGHT1);
+      int cur_y = 0;
+      it.rectangle(0, cur_y, 540, ROW_HEIGHT1, COLOR_ON);
+      int row_top = cur_y;
+      int ty = center_text_y(row_top, ROW_HEIGHT1, TEXT_SIZE) + 5;
+
+      // Cell 1: Time (HH:MM)
+      it.printf(10, ty, id(main_font), "%02d:%02d", now.hour, now.minute);
+
+      // Cell 2: Temperature
+      int x_temp = 95 + 10;
+      it.print(x_temp, ty - 2, id(icons_font), icon_thermo_orig.c_str());
+      x_temp += 35;
       {
-        int row_top = cur_y - ROW_HEIGHT1;
-        int ty = center_text_y(row_top, ROW_HEIGHT1, TEXT_SIZE) + 5;
-        // Cell 1: Time (HH:MM)
-        it.printf(10, ty, id(main_font), "%02d:%02d", now.hour, now.minute);
-        // Cell 2: Temperature
-        int x_temp = 95 + 10;
-        it.print(x_temp, ty - 2, id(icons_font), icon_thermo_orig.c_str());
-        x_temp += 35;
-        {
-          char buf[10];
-          if (isnan(sensor_esp_temp->state))
-            sprintf(buf, "---");
-          else
-            sprintf(buf, "%.0f°", sensor_esp_temp->state);
-          it.printf(x_temp, ty, id(main_font), "%s", buf);
-        }
-        // Cell 3: Humidity
-        int x_hum = 202 + 10;
-        it.print(x_hum, ty - 2, id(icons_font), icon_water.c_str());
-        x_hum += 25;
-        {
-          char buf[10];
-          if (isnan(sensor_esp_hum->state))
-            sprintf(buf, "---");
-          else
-            sprintf(buf, "%.0f%%", sensor_esp_hum->state);
-          it.printf(x_hum, ty, id(main_font), " %s", buf);
-        }
-        // Cell 4: Uptime (HH:MM:SS)
-        int x_uptime = 310 + 10;
-        if (up_sec < 120) {
-          it.printf(x_uptime, ty, id(main_font), "00:00:00");
-        } else {
-          it.printf(x_uptime, ty, id(main_font), "%02d:%02d:%02d", hh, mm, ss);
-        }
-        // Cell 5: Battery Level (percentage)
-        int x_batt = 440 + 5;
-        if (!isnan(sensor_battery->state)) {
-          float batt = sensor_battery->state;
-          std::string batt_icon = (batt < 99.0f) ? "mdi-battery-70" : "mdi-battery-charging";
-          it.print(x_batt, ty - 2, id(icons_font), id(material_icons_map)[batt_icon].c_str());
-          if (batt == 100.0f)
-            it.printf(480, ty, id(main_font), "%3s", "OK");
-          else
-            it.printf(480, ty, id(main_font), "%3.0f", batt);
-        }
+        char buf[10];
+        if (isnan(sensor_esp_temp->state))
+          sprintf(buf, "---");
+        else
+          sprintf(buf, "%.0f°", sensor_esp_temp->state);
+        it.printf(x_temp, ty, id(main_font), "%s", buf);
       }
-      
+
+      // Cell 3: Humidity
+      int x_hum = 202 + 10;
+      it.print(x_hum, ty - 2, id(icons_font), icon_water.c_str());
+      x_hum += 25;
+      {
+        char buf[10];
+        if (isnan(sensor_esp_hum->state))
+          sprintf(buf, "---");
+        else
+          sprintf(buf, "%.0f%%", sensor_esp_hum->state);
+        it.printf(x_hum, ty, id(main_font), " %s", buf);
+      }
+
+      // Cell 4: Uptime (HH:MM:SS)
+      int x_uptime = 310 + 10;
+      if (up_sec < 120) {
+        it.printf(x_uptime, ty, id(main_font), "00:00:00");
+      } else {
+        it.printf(x_uptime, ty, id(main_font), "%02d:%02d:%02d", hh, mm, ss);
+      }
+
+      // Cell 5: Battery Level
+      int x_batt = 440 + 5;
+      if (!isnan(sensor_battery->state)) {
+        float batt = sensor_battery->state;
+        std::string batt_icon = (batt < 99.0f) ? "mdi-battery-70" : "mdi-battery-charging";
+        it.print(x_batt, ty - 2, id(icons_font), id(material_icons_map)[batt_icon].c_str());
+        if (batt == 100.0f)
+          it.printf(480, ty, id(main_font), "%3s", "OK");
+        else
+          it.printf(480, ty, id(main_font), "%3.0f", batt);
+      }
