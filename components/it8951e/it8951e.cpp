@@ -205,41 +205,84 @@ void IT8951ESensor::set_vcom(uint16_t vcom) {
 }
 
 void IT8951ESensor::setup() {
-    ESP_LOGCONFIG(TAG, "Init Starting.");
-    this->spi_setup();
+  ESP_LOGCONFIG(TAG, "Init Starting.");
+  this->spi_setup();
 
-    if (nullptr != this->reset_pin_) {
-        this->reset_pin_->pin_mode(gpio::FLAG_OUTPUT);
-        this->reset();
+  // === Step 1: 复位 IT8951 ===
+  if (nullptr != this->reset_pin_) {
+    this->reset_pin_->pin_mode(gpio::FLAG_OUTPUT);
+    ESP_LOGD(TAG, "Asserting RESET (LOW) for 20ms...");
+    this->reset_pin_->digital_write(false);  // RESET LOW
+    delay(20);                               // 满足最小 10ms 要求
+    ESP_LOGD(TAG, "Releasing RESET (HIGH)...");
+    this->reset_pin_->digital_write(true);   // RESET HIGH
+    ESP_LOGD(TAG, "Waiting 100ms for IT8951 internal boot...");
+    delay(100);                              // 关键！等芯片内部初始化完成
+  }
+
+  // === Step 2: 配置 BUSY 引脚 ===
+  this->busy_pin_->pin_mode(gpio::FLAG_INPUT);
+  ESP_LOGD(TAG, "BUSY pin configured as INPUT.");
+
+  // === Step 3: 主动等待 BUSY 变为 HIGH（设备空闲）===
+  ESP_LOGD(TAG, "Waiting for BUSY to go HIGH (max 2s)...");
+  uint32_t start_wait = millis();
+  bool busy_ever_high = false;
+  while (millis() - start_wait < 2000) {
+    if (this->busy_pin_->digital_read()) {
+      busy_ever_high = true;
+      break;
     }
+    delay(10);
+  }
+  if (!busy_ever_high) {
+    ESP_LOGE(TAG, "CRITICAL: BUSY pin NEVER went HIGH after reset!");
+    ESP_LOGE(TAG, "Possible causes: no power to screen, hardware fault, or wrong pin.");
+    // 继续尝试，但大概率后续会失败
+  } else {
+    ESP_LOGD(TAG, "BUSY is HIGH. Device ready for commands.");
+  }
 
-    this->busy_pin_->pin_mode(gpio::FLAG_INPUT);
+  // === Step 4: 尝试读取设备信息（验证 SPI 通信）===
+  struct IT8951DevInfo_s dev_info;
+  ESP_LOGD(TAG, "Attempting to read device info...");
+  this->get_device_info(&dev_info);
+  ESP_LOGI(TAG, "Device Info - PanelW: %u, PanelH: %u, FW: %s, LUT: %s",
+           dev_info.usPanelW, dev_info.usPanelH,
+           dev_info.usFWVersion, dev_info.usLUTVersion);
 
-//    this->get_device_info(&(this->device_info_));
-    this->dump_config();
+  // === Step 5: 发送 SYS_RUN 命令 ===
+  ESP_LOGD(TAG, "Sending IT8951_TCON_SYS_RUN command...");
+  this->write_command(IT8951_TCON_SYS_RUN);
+  this->wait_busy(1000); // 等待命令完成
 
-    this->write_command(IT8951_TCON_SYS_RUN);
+  // === Step 6: 启用打包写入 ===
+  ESP_LOGD(TAG, "Enabling pack write (I80CPCR=0x0001)...");
+  this->write_reg(IT8951_I80CPCR, 0x0001);
+  this->wait_busy(100);
 
-    // enable pack write
-    this->write_reg(IT8951_I80CPCR, 0x0001);
+  // === Step 7: 设置 VCOM ===
+  ESP_LOGD(TAG, "Checking VCOM...");
+  uint16_t vcom = this->get_vcom(); // 这里可能超时，但继续
+  ESP_LOGI(TAG, "Current VCOM: %.02fV", (float)vcom / 1000);
+  if (vcom != 2300) {
+    ESP_LOGD(TAG, "Setting VCOM to -2.30V (2300 mV)...");
+    this->set_vcom(2300);
+    vcom = this->get_vcom();
+    ESP_LOGI(TAG, "VCOM after set: %.02fV", (float)vcom / 1000);
+  }
 
-    // set vcom to -2.30v
-    uint16_t vcom = this->get_vcom();
-    if (2300 != vcom) {
-        this->set_vcom(2300);
-        this->get_vcom();
-    }
+  // === Step 8: 分配帧缓冲 ===
+  ExternalRAMAllocator<uint8_t> buffer_allocator(ExternalRAMAllocator<uint8_t>::ALLOW_FAILURE);
+  this->should_write_buffer_ = buffer_allocator.allocate(this->get_buffer_length_());
+  if (this->should_write_buffer_ == nullptr) {
+    ESP_LOGE(TAG, "Init FAILED: Could not allocate frame buffer.");
+    return;
+  }
 
-    ExternalRAMAllocator<uint8_t> buffer_allocator(ExternalRAMAllocator<uint8_t>::ALLOW_FAILURE);
-    this->should_write_buffer_ = buffer_allocator.allocate(this->get_buffer_length_());
-    if (this->should_write_buffer_ == nullptr) {
-        ESP_LOGE(TAG, "Init FAILED.");
-        return;
-    }
+  this->init_internal_(this->get_buffer_length_());
 
-    this->init_internal_(this->get_buffer_length_());
-
-    ESP_LOGCONFIG(TAG, "Init Done.");
+  ESP_LOGCONFIG(TAG, "Init Done.");
 }
 
 /** @brief Write the image at the specified location, Partial update

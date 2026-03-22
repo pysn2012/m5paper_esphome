@@ -19,11 +19,11 @@ esphome:
       - delay: 5s    # Delay for power and bus stabilization
       - lambda: |-
           id(cpu_speed) = ESP.getCpuFreqMHz();  // Save CPU frequency
-      - it8951e.clear         # Delay for power and bus stabilization
-      - delay: 100ms
-      - it8951e.updateslow    # Update to stabilize the display
-      - delay: 10s
-      - it8951e.updateslow
+      # - it8951e.clear         # Delay for power and bus stabilization
+      # - delay: 100ms
+      # - it8951e.updateslow    # Update to stabilize the display
+      # - delay: 10s
+      # - it8951e.updateslow
       - lambda: |-
           id(boot_uptime) = id(system_uptime).state;
 
