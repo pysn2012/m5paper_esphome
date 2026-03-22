@@ -12,7 +12,8 @@ ota:
     password: !secret ota_key
 
 api:
-
+  encryption:
+    key: !secret api_ha
 
 debug:
   update_interval: 5s
