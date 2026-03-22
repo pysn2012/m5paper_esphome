@@ -61,7 +61,9 @@ touchscreen:
   - platform: gt911
     id: gt911_touchscreen
     display: m5paper_display
-    interrupt_pin: GPIO36
+    interrupt_pin:
+      number: GPIO36
+      mode: INPUT
     on_touch:
       then:
         - lambda: |-
