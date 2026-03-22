@@ -172,9 +172,6 @@ A2 (黑白动画模式)
   void write_display_slow();
 };
 
-// IT8951 寄存器地址常量（来自官方驱动）
-static const uint16_t IT8951_LISAR = 0x0208; // 目标内存地址寄存器
-
 // 自动化操作类
 template<typename... Ts> class ClearAction : public Action<Ts...>, public Parented<IT8951ESensor> {
  public:
