@@ -36,7 +36,7 @@ jobs:
 
       # 步骤4：编译m5paper_esphome固件
       - name: 编译固件
-        run: esphome compile m5paper_esphome.yaml
+        run: esphome compile example.yaml
 
       # 步骤5：动态查找编译产物
       - name: 动态查找 firmware.bin
