@@ -88,6 +88,14 @@ void IT8951ESensor::write_reg(uint16_t addr, uint16_t data) {
     this->disable();
 }
 
+// 新增函数：接受 uint32_t 地址
+void IT8951ESensor::set_target_memory_addr(uint32_t tar_addr) {
+    this->set_target_memory_addr(
+        (uint16_t)(tar_addr & 0xFFFF),      // Low
+        (uint16_t)((tar_addr >> 16) & 0xFFFF) // High
+    );
+}
+
 void IT8951ESensor::set_target_memory_addr(uint16_t tar_addrL, uint16_t tar_addrH) {
     this->write_reg(IT8951_LISAR + 2, tar_addrH);
     this->write_reg(IT8951_LISAR, tar_addrL);
@@ -208,62 +216,60 @@ void IT8951ESensor::setup() {
   ESP_LOGCONFIG(TAG, "Init Starting.");
   this->spi_setup();
 
-  // === Step 1: 复位 IT8951 ===
+  // === 1. 复位 IT8951 ===
   if (nullptr != this->reset_pin_) {
     this->reset_pin_->pin_mode(gpio::FLAG_OUTPUT);
     ESP_LOGD(TAG, "Asserting RESET (LOW) for 20ms...");
     this->reset_pin_->digital_write(false);  // RESET LOW
-    delay(20);                               // 满足最小 10ms 要求
+    delay(20);
     ESP_LOGD(TAG, "Releasing RESET (HIGH)...");
     this->reset_pin_->digital_write(true);   // RESET HIGH
     ESP_LOGD(TAG, "Waiting 100ms for IT8951 internal boot...");
-    delay(100);                              // 关键！等芯片内部初始化完成
+    delay(100);  // 关键延时
   }
 
-  // === Step 2: 配置 BUSY 引脚 ===
+  // === 2. 配置 BUSY 引脚 ===
   this->busy_pin_->pin_mode(gpio::FLAG_INPUT);
   ESP_LOGD(TAG, "BUSY pin configured as INPUT.");
 
-  // === Step 3: 主动等待 BUSY 变为 HIGH（设备空闲）===
-  ESP_LOGD(TAG, "Waiting for BUSY to go HIGH (max 2s)...");
+  // === 3. 等待 BUSY 释放（防御性编程）===
+  ESP_LOGD(TAG, "Waiting for BUSY to go HIGH...");
   uint32_t start_wait = millis();
-  bool busy_ever_high = false;
-  while (millis() - start_wait < 2000) {
-    if (this->busy_pin_->digital_read()) {
-      busy_ever_high = true;
+  while (!this->busy_pin_->digital_read()) {
+    if (millis() - start_wait > 2000) {
+      ESP_LOGE(TAG, "Timeout waiting for BUSY after reset!");
       break;
     }
     delay(10);
   }
-  if (!busy_ever_high) {
-    ESP_LOGE(TAG, "CRITICAL: BUSY pin NEVER went HIGH after reset!");
-    ESP_LOGE(TAG, "Possible causes: no power to screen, hardware fault, or wrong pin.");
-    // 继续尝试，但大概率后续会失败
-  } else {
-    ESP_LOGD(TAG, "BUSY is HIGH. Device ready for commands.");
-  }
 
-  // === Step 4: 尝试读取设备信息（验证 SPI 通信）===
-  struct IT8951DevInfo_s dev_info;
-  ESP_LOGD(TAG, "Attempting to read device info...");
-  this->get_device_info(&dev_info);
+  // === 4. 读取设备信息 ===
+  ESP_LOGD(TAG, "Reading device info...");
+  this->get_device_info(&(this->IT8951DevAll[this->model_].devInfo));
+  auto &info = this->IT8951DevAll[this->model_].devInfo;
   ESP_LOGI(TAG, "Device Info - PanelW: %u, PanelH: %u, FW: %s, LUT: %s",
-           dev_info.usPanelW, dev_info.usPanelH,
-           dev_info.usFWVersion, dev_info.usLUTVersion);
+           info.usPanelW, info.usPanelH,
+           info.usFWVersion, info.usLUTVersion);
 
-  // === Step 5: 发送 SYS_RUN 命令 ===
-  ESP_LOGD(TAG, "Sending IT8951_TCON_SYS_RUN command...");
+  // === 5. 发送 SYS_RUN 命令 ===
+  ESP_LOGD(TAG, "Sending SYS_RUN command...");
   this->write_command(IT8951_TCON_SYS_RUN);
-  this->wait_busy(1000); // 等待命令完成
+  this->wait_busy(1000);
 
-  // === Step 6: 启用打包写入 ===
-  ESP_LOGD(TAG, "Enabling pack write (I80CPCR=0x0001)...");
+  // === 6. 启用打包写入 ===
+  ESP_LOGD(TAG, "Enabling pack write...");
   this->write_reg(IT8951_I80CPCR, 0x0001);
   this->wait_busy(100);
 
-  // === Step 7: 设置 VCOM ===
-  ESP_LOGD(TAG, "Checking VCOM...");
-  uint16_t vcom = this->get_vcom(); // 这里可能超时，但继续
+  // === 🔥 7. 【关键】设置目标内存地址 (LISAR) ===
+  uint32_t img_addr = ((uint32_t)info.usImgBufAddrH << 16) | (uint32_t)info.usImgBufAddrL;
+  ESP_LOGD(TAG, "Setting target memory address: 0x%08X", img_addr);
+  this->set_target_memory_addr(img_addr);
+  this->wait_busy(100);
+
+  // === 8. 设置 VCOM ===
+  ESP_LOGD(TAG, "Checking/Setting VCOM...");
+  uint16_t vcom = this->get_vcom();
   ESP_LOGI(TAG, "Current VCOM: %.02fV", (float)vcom / 1000);
   if (vcom != 2300) {
     ESP_LOGD(TAG, "Setting VCOM to -2.30V (2300 mV)...");
@@ -272,14 +278,16 @@ void IT8951ESensor::setup() {
     ESP_LOGI(TAG, "VCOM after set: %.02fV", (float)vcom / 1000);
   }
 
-  // === Step 8: 分配帧缓冲 ===
+  // === 9. 分配帧缓冲区 ===
   ExternalRAMAllocator<uint8_t> buffer_allocator(ExternalRAMAllocator<uint8_t>::ALLOW_FAILURE);
   this->should_write_buffer_ = buffer_allocator.allocate(this->get_buffer_length_());
   if (this->should_write_buffer_ == nullptr) {
-    ESP_LOGE(TAG, "Init FAILED: Could not allocate frame buffer.");
+    ESP_LOGE(TAG, "Failed to allocate frame buffer! Not enough PSRAM?");
     return;
   }
+  ESP_LOGD(TAG, "Frame buffer allocated successfully.");
 
+  // === 10. 初始化内部显示参数 ===
   this->init_internal_(this->get_buffer_length_());
 
   ESP_LOGCONFIG(TAG, "Init Done.");
