@@ -60,7 +60,7 @@ i2c:
 display:
   - platform: it8951e
     id: m5paper_display
-    cs_pin: GPIO15
+    display_cs_pin: GPIO15
     reset_pin: GPIO23
     busy_pin: GPIO27
     rotation: 90
