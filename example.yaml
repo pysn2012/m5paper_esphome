@@ -38,7 +38,7 @@ external_components:
   - source:
       type: local
       path: components/           # 自定义组件目录（相对于本 YAML 文件）
-    components: [gt911, it8951e, m5paper]  # 加载这三个自定义组件
+    components: [it8951e, m5paper]  # 加载这三个自定义组件
 
 # ======================
 # 字体配置（用于屏幕显示）
