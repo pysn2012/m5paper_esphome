@@ -26,8 +26,6 @@ void IT8951ESensor::enable_cs() {
     this->cs_pin_->digital_write(false);
 }
 
-float IT8951ESensor::get_loop_priority() const { return 0.0f; }
-
 float IT8951ESensor::get_setup_priority() const { return setup_priority::HARDWARE; }
 
 
@@ -277,7 +275,7 @@ void IT8951ESensor::write_buffer_to_display(uint16_t x, uint16_t y, uint16_t w,
         }
 
         this->enable_cs();
-        this->write_byte32(word);
+        this->write_dword(word);
         this->disable_cs();
         pos += 2;
     }
@@ -315,7 +313,7 @@ void IT8951ESensor::clear(bool init) {
 
     for (uint32_t x = 0; x < looping; x++) {
         this->enable_cs();
-        this->write_byte32(0x0000FFFF);
+        this->write_dword(0x0000FFFF);
         this->disable_cs();
     }
 
@@ -390,6 +388,16 @@ void IT8951ESensor::dump_config(){
         this->device_info_->usFWVersion,
         this->device_info_->usImgBufAddrL | (this->device_info_->usImgBufAddrH << 16)
     );
+}
+
+void IT8951ESensor::write_dword(uint32_t value) {
+  uint8_t buf[4] = {
+      (uint8_t)((value >> 24) & 0xFF),
+      (uint8_t)((value >> 16) & 0xFF),
+      (uint8_t)((value >> 8) & 0xFF),
+      (uint8_t)(value & 0xFF)
+  };
+  this->write_array(buf, 4);
 }
 
 }  // namespace empty_spi_sensor
