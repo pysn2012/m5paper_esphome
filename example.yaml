@@ -30,7 +30,7 @@ external_components:
   - source:
       type: local
       path: components/    # 相对于 YAML 文件的路径
-    components: [bm8563, gt911, it8951e, m5paper]
+    components: [gt911, it8951e, m5paper]
 
 font:
   - file:
@@ -102,6 +102,7 @@ time:
       - bm8563.write_time
   - platform: bm8563
     id: rtc_time
+    address: 0x51
     sleep_duration: 3600000ms
 
 m5paper:
