@@ -26,6 +26,12 @@ ota:
   - platform: esphome
     password: !secret ota_key
 
+external_components:
+  - source:
+      type: local
+      path: components/    # 相对于 YAML 文件的路径
+    components: [bm8563, gt911, it8951e, m5paper]
+
 font:
   - file:
       type: gfonts
@@ -54,7 +60,7 @@ i2c:
 display:
   - platform: it8951e
     id: m5paper_display
-    display_cs_pin: GPIO15
+    cs_pin: GPIO15
     reset_pin: GPIO23
     busy_pin: GPIO27
     rotation: 90
@@ -127,7 +133,7 @@ binary_sensor:
     on_release: 
       - component.update: m5paper_display
   - platform: gpio
-    name: "BTN/PWR"
+    name: "BTN_PWR"
     pin: 
       number: GPIO38
       inverted: true
