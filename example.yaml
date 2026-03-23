@@ -103,7 +103,6 @@ time:
   - platform: bm8563
     id: rtc_time
     address: 0x51
-    sleep_duration: 3600000ms
 
 m5paper:
   battery_power_pin: GPIO5
