@@ -1,7 +1,6 @@
 #include "esphome/core/log.h"
 #include "esphome/components/i2c/i2c_bus.h"
 #include "gt911.h"
-#include <Wire.h>
 
 namespace esphome {
 namespace gt911 {
@@ -120,29 +119,36 @@ void GT911::setResolution(uint16_t _width, uint16_t _height) {
 }
 
 void GT911::writeByteData(uint16_t reg, uint8_t val) {
-  this->write_byte_16(highByte(reg), lowByte(reg) << 8 | val);
+  uint8_t buffer[3];
+  buffer[0] = reg & 0xFF;        // Register LSB
+  buffer[1] = (reg >> 8) & 0xFF; // Register MSB
+  buffer[2] = val;               // Data
+  this->write(buffer, 3);
 }
 
 uint8_t GT911::readByteData(uint16_t reg) {
-  uint8_t x;
-  this->write_byte(highByte(reg), lowByte(reg));
+  uint8_t addr[2] = { uint8_t(reg & 0xFF), uint8_t((reg >> 8) & 0xFF) };
+  this->write(addr, 2);  // Send 16-bit register address (LSB first)
   uint8_t data;
-  this->read(&data, 1);
+  this->read(&data, 1);  // Read data byte
   return data;
 }
 
 void GT911::writeBlockData(uint16_t reg, uint8_t *val, uint8_t size) {
-  this->write((uint8_t*)&reg, 2);
-  this->write(val, size);
+  std::vector<uint8_t> buffer(size + 2);
+  buffer[0] = reg & 0xFF;        // Register LSB
+  buffer[0] = reg & 0xFF;        // Register LSB
+  buffer[1] = (reg >> 8) & 0xFF; // Register MSB
+  memcpy(buffer.data() + 2, val, size);
+  this->write(buffer.data(), buffer.size());
 }
 
 bool GT911::readBlockData(uint8_t *buf, uint16_t reg, uint8_t size) {
-  esphome::i2c::ErrorCode e;
-  if(!this->write_byte(highByte(reg), lowByte(reg))){
+  uint8_t addr[2] = { uint8_t(reg & 0xFF), uint8_t((reg >> 8) & 0xFF) };
+  if (this->write(addr, 2) != i2c::ERROR_OK) {
     return false;
   }
-  e = this->read(buf, size);
-  return e == esphome::i2c::ERROR_OK;
+  return this->read(buf, size) == i2c::ERROR_OK;
 }
 
 }  // namespace gt911
