@@ -22,9 +22,9 @@ psram:
 # Enable Home Assistant API
 api:
 
-
 ota:
-
+  - platform: esphome
+    password: !secret ota_key
 
 font:
   - file:
