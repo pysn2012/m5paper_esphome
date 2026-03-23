@@ -1,160 +1,189 @@
-
+# ======================
+# ESP32 硬件平台设置
+# ======================
 esp32:
-  board: esp32dev
+  board: esp32dev                 # 使用 ESP32 Dev Module 开发板
   framework:
-    type: arduino
+    type: arduino                 # 使用 Arduino 框架（而非 ESP-IDF）
 
+# ======================
+# ESPHome 全局设置
+# ======================
 esphome:
-  name: tablet
+  name: tablet                    # 设备名称（用于生成固件名、MQTT 主题等）
   on_boot:
-    priority: 750.0
+    priority: 750.0               # 启动时高优先级执行（数值越大越早）
     then:
-      - IT8951E.clear
-      - delay: 100ms
-      - component.update: m5paper_display
+      - IT8951E.clear             # 清空 ePaper 屏幕（自定义组件）
+      - delay: 100ms              # 延迟 100 毫秒
+      - component.update: m5paper_display  # 刷新屏幕显示
 
-# Enable logging
-logger:
+# ======================
+# 日志、PSRAM、API、OTA
+# ======================
+logger:                           # 启用串口日志输出（用于调试）
 
-# Enable psram
-psram:
+psram:                            # 启用 PSRAM（M5Paper 有外置 PSRAM，必须开启）
 
-# Enable Home Assistant API
-api:
+api:                              # 启用 Home Assistant API（支持远程控制和状态同步）
 
 ota:
   - platform: esphome
-    password: !secret ota_key
+    password: !secret ota_key     # OTA 无线升级密码（从 secrets.yaml 读取）
 
+# ======================
+# 外部自定义组件（本地路径）
+# ======================
 external_components:
   - source:
       type: local
-      path: components/    # 相对于 YAML 文件的路径
-    components: [gt911, it8951e, m5paper]
+      path: components/           # 自定义组件目录（相对于本 YAML 文件）
+    components: [gt911, it8951e, m5paper]  # 加载这三个自定义组件
 
+# ======================
+# 字体配置（用于屏幕显示）
+# ======================
 font:
   - file:
       type: gfonts
-      family: "Noto Sans SC"
+      family: "Noto Sans SC"      # 使用 Google Fonts 的“思源黑体”
       weight: 400
       italic: false
-    id: font1
-    size: 20
+    id: font1                     # 字体 ID，供 lambda 调用
+    size: 20                      # 字号 20
   - file:
       type: gfonts
       family: "Noto Sans SC"
       weight: 400
       italic: false
-    id: large_font
+    id: large_font                # 大号字体
     size: 40
 
+# ======================
+# SPI 总线（用于 ePaper 屏幕）
+# ======================
 spi:
-  clk_pin: GPIO14
-  mosi_pin: GPIO12
-  miso_pin: GPIO13
+  clk_pin: GPIO14                 # SPI 时钟引脚
+  mosi_pin: GPIO12                # 主机输出从机输入（MOSI）
+  miso_pin: GPIO13                # 主机输入从机输出（MISO，ePaper 可能不用）
 
+# ======================
+# I2C 总线（用于 RTC、触摸、温湿度传感器）
+# ======================
 i2c:
-  sda: GPIO21
-  scl: GPIO22
+  sda: GPIO21                     # I2C 数据线
+  scl: GPIO22                     # I2C 时钟线
 
+# ======================
+# 显示屏：M5Paper ePaper（基于 IT8951 驱动芯片）
+# ======================
 display:
-  - platform: it8951e
-    id: m5paper_display
-    display_cs_pin: GPIO15
-    reset_pin: GPIO23
-    busy_pin: GPIO27
-    rotation: 90
-    reversed: False
-    update_interval: "never"
+  - platform: it8951e             # 使用自定义的 IT8951 ePaper 驱动
+    id: m5paper_display           # 组件 ID，供其他地方引用
+    display_cs_pin: GPIO15        # 片选引脚（⚠️ 注意：GPIO15 是 strapping 引脚！）
+    reset_pin: GPIO23             # 复位引脚
+    busy_pin: GPIO27              # 忙信号引脚
+    rotation: 90                  # 屏幕旋转 90 度
+    reversed: False               # 不反转颜色
+    update_interval: "never"      # 不自动刷新，仅手动更新
     lambda: |-
-      it.printf(25, 25, id(large_font), "%.1f°", id(current_temperature).state);
-      it.strftime(350, 25, id(large_font), "%H:%M:%S", id(rtc_time).now());
+      # 在屏幕上绘制内容
+      it.printf(25, 25, id(large_font), "%.1f°", id(current_temperature).state);  // 显示温度
+      it.strftime(350, 25, id(large_font), "%H:%M:%S", id(rtc_time).now());       // 显示时间
 
+# ======================
+# 触摸屏：GT911 电容触摸芯片
+# ======================
 touchscreen:
-  - platform: gt911
-    display: m5paper_display
-    id: gt911_touchscreen
-    interrupt_pin: GPIO36
+  - platform: gt911               # 使用自定义 GT911 驱动
+    display: m5paper_display      # 关联到上面的显示屏（用于坐标映射）
+    id: gt911_touchscreen         # 触摸屏 ID
+    interrupt_pin: GPIO36         # 中断引脚（仅输入，不能输出）
 
-# Deep sleep works, but it's not great battery life, i'd advise using the 
-# bm
-#deep_sleep:
-#  id: deep_sleep_1
-#  run_duration: 30s
-#  sleep_duration: 20min
-#  wakeup_pin:
-#    number: GPIO38
-#    inverted: true
-#  esp32_ext1_wakeup:
-#    pins:
-#      - GPIO37
-#    mode: ALL_LOW
-
+# ======================
+# WiFi 设置
+# ======================
 wifi:
-  ssid: YOUR SSID
-  password: YOUR PASSWORD
-  power_save_mode: "HIGH"
+  ssid: YOUR SSID                 # 替换为你的 WiFi 名称
+  password: YOUR PASSWORD         # 替换为你的 WiFi 密码
+  power_save_mode: "HIGH"         # 高省电模式（适合电池设备）
 
+# ======================
+# 时间同步
+# ======================
 time:
-  - platform: homeassistant
-    id: ha_time
-    on_time_sync: 
-      - bm8563.write_time
-  - platform: bm8563
+  - platform: homeassistant       # 从 Home Assistant 获取网络时间
     id: rtc_time
-    address: 0x51
 
+
+# ======================
+# M5Paper 电源管理（自定义组件）
+# ======================
 m5paper:
-  battery_power_pin: GPIO5
-  main_power_pin: GPIO2
-  update_interval: 10s
+  battery_power_pin: GPIO5        # 电池供电使能引脚（⚠️ GPIO5 是 strapping 引脚！）
+  main_power_pin: GPIO2           # 主电源控制引脚（⚠️ GPIO2 是 strapping 引脚！）
+  update_interval: 10s            # 每 10 秒更新一次电池电压
   battery_voltage:
-    name: "M5Paper Battery"
+    name: "M5Paper Battery"       # 电池电压传感器名称
 
+# ======================
+# 传感器：SHT3x 温湿度传感器
+# ======================
 sensor:
   - platform: sht3xd
     temperature:
       name: "M5Paper Temperature"
-      id: current_temperature
+      id: current_temperature     # 供 lambda 显示使用
     humidity:
       name: "M5Paper Humidity"
-    address: 0x44
+    address: 0x44                 # I2C 地址
     update_interval: 10s
 
+# ======================
+# 按键与触摸按钮
+# ======================
 binary_sensor:
+  # 右侧物理按键（GPIO37）
   - platform: gpio
     name: "Right"
     id: right_button
     pin: 
       number: GPIO37
-      inverted: true
+      inverted: true              # 按下时为低电平（需反相）
     on_press: 
       - component.update: m5paper_display
     on_release: 
       - component.update: m5paper_display
+
+  # 电源按键（GPIO38）
   - platform: gpio
     name: "BTN_PWR"
     pin: 
       number: GPIO38
       inverted: true
+
+  # 左侧物理按键（GPIO39）
   - platform: gpio
     name: "Left"
     pin: 
       number: GPIO39
       inverted: true
+
+  # 屏幕左上角虚拟触摸按钮
   - platform: touchscreen
     name: Top Left Touch Button
     id: top_left_touch_button
     touchscreen_id: gt911_touchscreen
-    internal: true
+    internal: true                # 不暴露给 Home Assistant（仅内部使用）
     x_min: 0
     x_max: 100
     y_min: 0
     y_max: 100
     on_press: 
+      - logger.log: "Top-left button pressed!"
       # Example of applying the sleep duration and shutting down to the lowest power mode
-      - bm8563.apply_sleep_duration
-      - delay: 1s
-      - m5paper.shutdown_main_power
+      # - bm8563.apply_sleep_duration
+      # - delay: 1s
+      # - m5paper.shutdown_main_power
 
 
