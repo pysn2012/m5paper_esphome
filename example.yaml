@@ -98,7 +98,10 @@ touchscreen:
   - platform: gt911               # 使用自定义 GT911 驱动
     display: m5paper_display      # 关联到上面的显示屏（用于坐标映射）
     id: gt911_touchscreen         # 触摸屏 ID
-    interrupt_pin: GPIO36         # 中断引脚（仅输入，不能输出）
+    interrupt_pin:
+      number: GPIO36
+      mode: INPUT                 # ← 显式指定为输入模式
+      inverted: false             # GT911 中断低电平有效
 
 # ======================
 # WiFi 设置
