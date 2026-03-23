@@ -109,6 +109,7 @@ sensor:
   - platform: sht3xd
     temperature:
       name: "M5Paper Temperature"
+      id: current_temperature
     humidity:
       name: "M5Paper Humidity"
     address: 0x44
