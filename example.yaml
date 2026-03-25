@@ -8,10 +8,12 @@ esphome:
   on_boot:
     - then:
       # read the RTC time once when the system boots
-      bm8563.read_time:
+      - bm89563.read_time:
+          id: rtc_time
     - priority: -100
       then:
         - it8951e.clear
+            id: m5paper_display
         - delay: 100ms
         - component.update: m5paper_display
 
