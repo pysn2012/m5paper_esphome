@@ -1,9 +1,13 @@
-#ifndef _IT8951_DEFINES_H_
-#define _IT8951_DEFINES_H_
+#pragma once
 
 /*-----------------------------------------------------------------------
 IT8951 Command defines
 ------------------------------------------------------------------------*/
+
+// Packet types
+#define IT8951_PACKET_TYPE_CMD      0x6000
+#define IT8951_PACKET_TYPE_WRITE    0x0000
+#define IT8951_PACKET_TYPE_READ     0x1000
 
 //Built in I80 Command Code
 #define IT8951_TCON_SYS_RUN         0x0001
@@ -26,11 +30,12 @@ IT8951 Command defines
 #define IT8951_I80_CMD_GET_DEV_INFO 0x0302
 #define IT8951_I80_CMD_DPY_BUF_AREA 0x0037
 #define IT8951_I80_CMD_VCOM         0x0039
+#define IT8951_I80_CMD_VCOM_READ    0x0000
+#define IT8951_I80_CMD_VCOM_WRITE   0x0001
 
 /*-----------------------------------------------------------------------
  IT8951 Mode defines
 ------------------------------------------------------------------------*/
-
 //Pixel mode (Bit per Pixel)
 #define IT8951_2BPP             0
 #define IT8951_3BPP             1
@@ -40,6 +45,9 @@ IT8951 Command defines
 //Endian Type
 #define IT8951_LDIMG_L_ENDIAN   0
 #define IT8951_LDIMG_B_ENDIAN   1
+
+// Default VCOM value (mV)
+#define IT8951_DEFAULT_VCOM     2300
 
 /*-----------------------------------------------------------------------
 IT8951 Registers defines
@@ -73,5 +81,3 @@ IT8951 Registers defines
 #define IT8951_MCSR_BASE_ADDR       0x0200
 #define IT8951_MCSR                 (IT8951_MCSR_BASE_ADDR + 0x0000)
 #define IT8951_LISAR                (IT8951_MCSR_BASE_ADDR + 0x0008)
-
-#endif

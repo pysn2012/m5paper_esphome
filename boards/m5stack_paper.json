@@ -1,0 +1,50 @@
+{
+  "name": "M5Stack Paper",
+  "vendor": "M5Stack",
+  "board": "m5stack-paper",
+  "framework": {
+    "sdk": "arduino",
+    "framework_version": "2.0.17",
+    "platform_version": "6.4.0"
+  },
+  "debug": {
+    "onboard_jtag": false,
+    "svd_file": "esp32wrover.svd",
+    "openocd_config": "interface/ftdi/esp32_devkitj_v1.cfg"
+  },
+  "flash_size": "16MB",
+  "psram_size": "8MB",
+  "features": {
+    "wifi": true,
+    "bluetooth": false,
+    "ethernet": false,
+    "external_crystal": true
+  },
+  "defaults": {
+    "baud_rate": 115200,
+    "upload_port": "/dev/ttyUSB0"
+  },
+  "mac_address": {
+    "wifi": "f4:cf:a2:XX:XX:XX",
+    "bluetooth": "f4:cf:a2:XX:XX:XX"
+  },
+  "pins": {
+    "MOSI": 12,
+    "MISO": 13,
+    "SCK": 14,
+    "CS": 15,
+    "BUSY": 27,
+    "RESET": 4,
+    "SDA": 21,
+    "SCL": 22,
+    "BAT_ADC": 35,
+    "BUTTON_LEFT": 37,
+    "BUTTON_PUSH": 38,
+    "BUTTON_RIGHT": 39
+  },
+  "aliases": [
+    "m5paper",
+    "M5Paper",
+    "M5Stack_Paper"
+  ]
+}

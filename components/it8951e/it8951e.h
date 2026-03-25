@@ -1,23 +1,44 @@
 #pragma once
 
 #include "esphome/core/component.h"
+#include "esphome/core/version.h"
 #include "esphome/components/spi/spi.h"
 #include "esphome/components/display/display_buffer.h"
 
-namespace esphome {
-namespace it8951e {
+namespace esphome::it8951e {
 
+enum class EPaperState : uint8_t {
+  IDLE,       // not doing anything
+  UPDATE,     // update the buffer
+  RESET,      // drive reset low (active)
+  RESET_END,  // drive reset high (inactive)
+
+  SHOULD_WAIT,     // states higher than this should wait for the display to be not busy
+  INITIALISE,      // send the init sequence
+  TRANSFER_DATA,   // transfer data to the display
+  POWER_ON,        // power on the display
+  REFRESH_SCREEN,  // send refresh command
+  POWER_OFF,       // power off the display
+  DEEP_SLEEP,      // deep sleep the display
+};
+
+static constexpr uint32_t MAX_TRANSFER_TIME = 10;  // Transfer in 10ms blocks to allow the loop to run
+
+enum it8951eModel
+{
+  M5EPD = 0,
+  it8951eModelsEND // MUST be last
+};
+
+#if ESPHOME_VERSION_CODE >= VERSION_CODE(2023, 12, 0)
 class IT8951ESensor : public display::DisplayBuffer,
-                      public spi::SPIDevice<spi::BIT_ORDER_MSB_FIRST, 
-                                           spi::CLOCK_POLARITY_LOW, 
-                                           spi::CLOCK_PHASE_LEADING,
-                                           spi::DATA_RATE_20MHZ> {
+#else
+class IT8951ESensor : public PollingComponent, public display::DisplayBuffer,
+#endif  // VERSION_CODE(2023, 12, 0)
+                      public spi::SPIDevice<spi::BIT_ORDER_MSB_FIRST, spi::CLOCK_POLARITY_LOW, spi::CLOCK_PHASE_LEADING,
+                                            spi::DATA_RATE_20MHZ> {
  public:
-  // 删除 get_loop_priority()
-  // 可选：直接实现 get_setup_priority()
-  float get_setup_priority() const override { 
-    return esphome::setup_priority::PROCESSOR; 
-  }
+  float get_setup_priority() const override { return setup_priority::PROCESSOR; };
 
 /*
 ---------------------------------------- Refresh mode description
@@ -89,108 +110,168 @@ shown in Figure 1. The use of a white image in the transition from 4-bit to
 
 */
 
-typedef struct
-{
-    uint16_t usPanelW; // these are incorrect
-    uint16_t usPanelH; // on m5paper
-    uint16_t usImgBufAddrL;
-    uint16_t usImgBufAddrH;
-    char usFWVersion[16]; 	// empty on m5paper
-    char usLUTVersion[16]; 	// empty on m5paper
-}IT8951DevInfo;
+  struct IT8951DevInfo_s
+  {
+      int usPanelW;
+      int usPanelH;
+      uint16_t usImgBufAddrL;
+      uint16_t usImgBufAddrH;
+      char usFWVersion[16];
+      char usLUTVersion[16];
+  };
 
-typedef enum               //             Typical
-{                          //   Ghosting  Update Time  Usage
-    UPDATE_MODE_INIT = 0,  // * N/A       2000ms       Display initialization,
-    UPDATE_MODE_DU   = 1,  //   Low       260ms        Monochrome menu, text
-                           //   input, and touch screen input
-    UPDATE_MODE_GC16 = 2,  // * Very Low  450ms        High quality images
-    UPDATE_MODE_GL16 =
-        3,  // * Medium    450ms        Text with white background
-    UPDATE_MODE_GLR16 =
-        4,  //   Low       450ms        Text with white background
-    UPDATE_MODE_GLD16 =
-        5,  //   Low       450ms        Text and graphics with white background
-    UPDATE_MODE_DU4 =
-        6,  // * Medium    120ms        Fast page flipping at reduced contrast
-    UPDATE_MODE_A2 = 7,  //   Medium    290ms        Anti-aliased text in menus
-                         //   / touch and screen input
-    UPDATE_MODE_NONE = 8
-} m5epd_update_mode_t;  // The ones marked with * are more commonly used
+  struct IT8951Dev_s
+  {
+      struct IT8951DevInfo_s devInfo;
+      display::DisplayType displayType;
+  };
+
+  enum update_mode_e         //             Typical
+  {                          //   Ghosting  Update Time  Usage
+      UPDATE_MODE_INIT = 0,  // * N/A       2000ms       Display initialization,
+      UPDATE_MODE_DU   = 1,  //   Low       260ms        Monochrome menu, text input, and touch screen input
+      UPDATE_MODE_GC16 = 2,  // * Very Low  450ms        High quality images
+      UPDATE_MODE_GL16 = 3,  // * Medium    450ms        Text with white background
+      UPDATE_MODE_GLR16 = 4, //   Low       450ms        Text with white background
+      UPDATE_MODE_GLD16 = 5, //   Low       450ms        Text and graphics with white background
+      UPDATE_MODE_DU4 = 6,   // * Medium    120ms        Fast page flipping at reduced contrast
+      UPDATE_MODE_A2 = 7,    //   Medium    290ms        Anti-aliased text in menus / touch and screen input
+      UPDATE_MODE_NONE = 8
+  };  // The ones marked with * are more commonly used
 
   void set_reset_pin(GPIOPin *reset) { this->reset_pin_ = reset; }
   void set_busy_pin(GPIOPin *busy) { this->busy_pin_ = busy; }
-  void set_cs_pin(GPIOPin *cs) { 
-    cs->pin_mode(gpio::FLAG_OUTPUT);
-    this->cs_pin_ = cs; 
-  }
+
   void set_reversed(bool reversed) { this->reversed_ = reversed; }
+  void set_reset_duration(uint32_t reset_duration) { this->reset_duration_ = reset_duration; }
+  void set_model(it8951eModel model);
+  void set_sleep_when_done(bool sleep_when_done) { this->sleep_when_done_ = sleep_when_done; }
+  void set_full_update_every(uint32_t full_update_every) { this->full_update_every_ = full_update_every; }
 
   void setup() override;
+  void loop() override;
   void update() override;
+  void update_slow();
   void dump_config() override;
-  display::DisplayType get_display_type() override { return display::DisplayType::DISPLAY_TYPE_BINARY; }
+
+  display::DisplayType get_display_type() override { return IT8951DevAll[this->model_].displayType; }
 
   void clear(bool init);
+
+  void fill(Color color) override;
+  void draw_pixel_at(int x, int y, Color color) override;
+  void write_display(update_mode_e mode);
 
  protected:
   void draw_absolute_pixel_internal(int x, int y, Color color) override;
 
-  int get_width_internal() override;
+  int get_width_internal() override { return usPanelW_; };
 
-  int get_height_internal() override;
+  int get_height_internal() override { return usPanelH_; };
 
   uint32_t get_buffer_length_();
 
 
  private:
-  IT8951DevInfo *device_info_{nullptr};
-  uint8_t *should_write_buffer_{nullptr};
-  void get_device_info(IT8951DevInfo *info);
+  struct IT8951Dev_s IT8951DevAll[it8951eModel::it8951eModelsEND]
+  { // it8951eModel::M5EPD
+    960,    // .devInfo.usPanelW
+    540,    // .devInfo.usPanelH
+    0x36E0, // .devInfo.usImgBufAddrL
+    0x0012, // .devInfo.usImgBufAddrH
+    "",     // .devInfo.usFWVersion
+    "",     // .devInfo.usLUTVersion
+    display::DisplayType::DISPLAY_TYPE_GRAYSCALE // .displayType (M5EPD supports 16 gray scale levels)
+  };
 
-  uint32_t max_x = 0;
-  uint32_t max_y = 0;
+  int max_x = 0;
+  int max_y = 0;
+  int min_x = 960;
+  int min_y = 540;
+  uint16_t m_endian_type = 0;
+  uint16_t m_pix_bpp = 0;
+  uint8_t _it8951_rotation = 0;
 
   GPIOPin *reset_pin_{nullptr};
   GPIOPin *busy_pin_{nullptr};
-  GPIOPin *cs_pin_{nullptr};
 
-  bool reversed_ = false;
-
-  void enable_cs();
-  void disable_cs();
+  int usPanelW_{0};
+  int usPanelH_{0};
+  bool reversed_{false};
+  uint32_t reset_duration_{100};
+  bool sleep_when_done_{true}; // If true, the display will go to sleep after each update
+  uint32_t full_update_every_{60}; // Full screen refresh every 60 updates
+  uint32_t partial_update_{0}; // Partial update counter
+  enum it8951eModel model_{it8951eModel::M5EPD};
 
   void reset(void);
 
-  void wait_busy(uint32_t timeout = 3000);
-  void check_busy(uint32_t timeout = 3000);
+  /* 1000ms timeout because I've seen it take up to 750ms (and ~310ms on average)
+   * Mostly for screen sleep and run commands */
+  void wait_busy(uint32_t timeout = 1000);
+  void check_busy(uint32_t timeout = 1000);
+
+  uint16_t get_vcom();
+  void set_vcom(uint16_t vcom);
 
   // comes from ref driver code from waveshare
   uint16_t read_word();
-  void read_words(void *buf, uint32_t length);
 
   void write_two_byte16(uint16_t type, uint16_t cmd);
   void write_command(uint16_t cmd);
   void write_word(uint16_t cmd);
   void write_reg(uint16_t addr, uint16_t data);
-  void set_target_memory_addr(uint32_t tar_addr);
+  void set_target_memory_addr(uint16_t tar_addrL, uint16_t tar_addrH);
   void write_args(uint16_t cmd, uint16_t *args, uint16_t length);
 
   void set_area(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
   void update_area(uint16_t x, uint16_t y, uint16_t w,
-                    uint16_t h, m5epd_update_mode_t mode);
+                    uint16_t h, update_mode_e mode);
 
 
 
-  void write_buffer_to_display(uint16_t x, uint16_t y, uint16_t w,
-                                uint16_t h, const uint8_t *gram);
-  void write_display();
+  void process_state_();
+  void set_state_(EPaperState state, uint16_t delay = 0);
+  bool is_idle_() const;
+  bool prepare_transfer_(update_mode_e &mode);
+  bool transfer_row_data_();
+  bool is_display_busy_();
+  uint8_t color_to_nibble_(const Color &color) const;
+
+  EPaperState state_{EPaperState::IDLE};
+  uint32_t delay_until_{0};
+  bool waiting_for_idle_{false};
+  bool initialized_{false};
+
+  update_mode_e pending_mode_{update_mode_e::UPDATE_MODE_NONE};
+  uint16_t pending_x_{0};
+  uint16_t pending_y_{0};
+  uint16_t pending_w_{0};
+  uint16_t pending_h_{0};
+  uint16_t transfer_row_{0};
+  uint32_t draw_calls_since_yield_{0};
+  uint32_t update_started_at_{0};
+  bool update_timing_active_{false};
+  bool did_init_clear_{false};
+  uint32_t clear_count_{0};
+  static constexpr uint32_t INIT_CLEAR_EVERY = 12;
+  bool update_pending_{false};
+  update_mode_e queued_update_mode_{update_mode_e::UPDATE_MODE_NONE};
 };
 
 template<typename... Ts> class ClearAction : public Action<Ts...>, public Parented<IT8951ESensor> {
  public:
-  void play(Ts... x) override { this->parent_->clear(true); }
+  void play(const Ts &... x) override { this->parent_->clear(true); }
 };
 
-}  // namespace empty_spi_sensor
-}  // namespace esphome
+template<typename... Ts> class UpdateSlowAction : public Action<Ts...>, public Parented<IT8951ESensor> {
+ public:
+  void play(const Ts &... x) override { this->parent_->update_slow(); }
+};
+
+template<typename... Ts> class DrawAction : public Action<Ts...>, public Parented<IT8951ESensor> {
+ public:
+  void play(const Ts &... x) override { this->parent_->write_display(IT8951ESensor::UPDATE_MODE_DU); }
+};
+
+}  // namespace esphome::it8951e
