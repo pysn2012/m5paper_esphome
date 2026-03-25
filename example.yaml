@@ -93,8 +93,8 @@ display:
     rotation: 90                  # 屏幕旋转 90 度
     reversed: False               # 不反转颜色
     update_interval: never        # 不自动刷新，仅手动更新
+    # 在屏幕上绘制内容
     lambda: |-
-      # 在屏幕上绘制内容
       it.printf(25, 25, id(normal_font), "%.1f°", id(m5paper_temperature).state);  // 显示温度
       it.strftime(350, 25, id(clock_font), "%H:%M:%S", id(rtc_time).now());       // 显示时间
 
