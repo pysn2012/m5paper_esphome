@@ -1,15 +1,15 @@
 # 全局变量
 substitutions:
-  name: m5paper_screen
+  device_name: m5paper_screen
   friendly_name: M5paper screen
 
   # 允许显示的字符集。此列表非常庞大，包含了多语言字符。
   allowed_characters: |-
-    一二三四五六七八九十百千万亿温度湿时间分秒度你好世界我他和开心快乐·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
+    一二三四五六七八九十百千万亿温度湿时间分秒你好世界我他和开心快乐·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
  
 # ESPHome 核心配置
 esphome:
-  name: ${name}
+  name: ${device_name}
   friendly_name: ${friendly_name}
   min_version: 2025.5.0               # 要求的最低 ESPHome 版本
   name_add_mac_suffix: true           # 在设备名后附加 MAC 地址，避免多设备冲突
@@ -104,7 +104,7 @@ display:
       // 在 (25, 25) 位置显示温度（保留一位小数 + ° 符号）
       it.printf(25, 25, id(cn_font), "%.1f°", id(m5paper_temperature).state);
       // 在 (25, 125) 位置显示当前 RTC 时间（格式：HH:MM:SS）
-      it.strftime(25, 125, id(big_font), "%H:%M:%S", id(rtc_time).now());
+      it.strftime(25, 125, id(big_font), "%H:%M:%S", id(rtc_time).now()); 
 
 # 触摸屏：GT911 电容触摸芯片
 touchscreen:
