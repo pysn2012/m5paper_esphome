@@ -108,7 +108,7 @@ display:
       it.print(it.get_width()/2, 30, id(cn_font), TextAlign::TOP_CENTER, "你好M5Paper");
 
       // 3. 标题下方居中：完整时间（年月日 时分 星期）
-      it.strftime(it.get_width()/2, 100, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M 星期%w", id(rtc_time).now());
+      it.strftime(it.get_width()/2, 100, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M %A", id(rtc_time).now());
 
       // 4. 时间下方居中：温度 湿度
       it.printf(it.get_width()/2, 200, id(cn_font), TextAlign::TOP_CENTER, "%.1f℃  %.1f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
