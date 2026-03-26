@@ -101,10 +101,17 @@ display:
     update_interval: never        # 不自动刷新，仅手动更新
     # 在屏幕上绘制内容
     lambda: |-
-      // 在 (25, 25) 位置显示温度（保留一位小数 + ° 符号）
-      it.printf(25, 25, id(cn_font), "%.1f°", id(m5paper_temperature).state);
-      // 在 (25, 125) 位置显示当前 RTC 时间（格式：HH:MM:SS）
-      it.strftime(25, 125, id(big_font), "%H:%M:%S", id(rtc_time).now()); 
+      // 1. 屏幕边缘画边框
+      it.rectangle(10, 10, it.get_width() - 20, it.get_height() - 20);
+
+      // 2. 标题：顶部居中 —— 你好M5Paper
+      it.print(it.get_width()/2, 30, id(cn_font), TextAlign::TOP_CENTER, "你好M5Paper");
+
+      // 3. 标题下方居中：完整时间（年月日 时分 星期）
+      it.strftime(it.get_width()/2, 100, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M 星期%w", id(rtc_time).now());
+
+      // 4. 时间下方居中：温度 湿度
+      it.printf(it.get_width()/2, 200, id(cn_font), TextAlign::TOP_CENTER, "%.1f℃  %.1f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
 
 # 触摸屏：GT911 电容触摸芯片
 touchscreen:
@@ -120,6 +127,11 @@ touchscreen:
       number: GPIO36
       mode: INPUT                 # 显式指定为输入模式
       inverted: false             # GT911 中断低电平有效
+    on_touch:
+      then:
+        - logger.log:
+            format: "Touch: x=%d, y=%d, id=%d, %s"
+            args: [x, y, id, state ? "DOWN" : "UP"]
 
 # 重启开关
 switch:
@@ -131,7 +143,7 @@ switch:
 time:
   - platform: homeassistant       # 从 Home Assistant 获取网络时间
     id: homeassistant_time
-    timezone: Europe/Paris        # 时区设置
+    timezone: Asia/Shanghai        # 时区设置
     on_time_sync:
       - bm8563.write_time         # 时间同步成功后，写入 RTC 芯片（BM8563）
   - platform: bm8563              # 使用 BM8563 实时时钟芯片（I2C 接口）
