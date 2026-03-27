@@ -5,7 +5,7 @@ substitutions:
 
   # 允许显示的字符集
   allowed_characters: |-
-    一二三四五六七八九十百千万亿温度湿时间分秒你好世界我他和开心快乐·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
+    一二三四五六七八九十百千万亿温度湿时间分秒你好世界我他和开心快乐电量·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
  
 # ESPHome 核心配置
 esphome:
@@ -103,26 +103,24 @@ display:
     lambda: |-
       // 1. 屏幕边缘画边框
       it.rectangle(10, 10, it.get_width() - 20, it.get_height() - 20);
+      
+      // 2. 右上角显示电池电量（带 % 符号）
+      it.printf(it.get_width() - 20, 20, id(cn_font), TextAlign::TOP_RIGHT, "电量：%.0f%%", id(m5paper_battery_level).state);
 
-      // 2. 标题：顶部居中 —— 你好M5Paper
-      it.print(it.get_width()/2, 30, id(cn_font), TextAlign::TOP_CENTER, "你好M5Paper");
+      // 3. 标题：顶部居中 —— 你好M5Paper
+      it.print(it.get_width()/2, 40, id(cn_font), TextAlign::TOP_CENTER, "你好M5Paper");
 
-      // 3. 标题下方居中：完整时间（年月日 时分 星期）
-      it.strftime(it.get_width()/2, 100, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M %A", id(rtc_time).now());
+      // 4. 标题下方居中：完整时间（年月日 时分 星期）
+      it.strftime(it.get_width()/2, 200, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M %A", id(rtc_time).now());
 
-      // 4. 时间下方居中：温度 湿度
-      it.printf(it.get_width()/2, 200, id(cn_font), TextAlign::TOP_CENTER, "%.1f℃  %.1f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
+      // 5. 时间下方居中：温度 湿度
+      it.printf(it.get_width()/2, 270, id(cn_font), TextAlign::TOP_CENTER, "温度：%.1f℃    湿度：%.1f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
 
 # 触摸屏：GT911 电容触摸芯片
 touchscreen:
   - platform: gt911
     display: m5paper_display      # 关联到显示屏
     id: gt911_touchscreen         # 触摸屏 ID
-    calibration:
-      x_min: 0
-      x_max: 960
-      y_min: 0
-      y_max: 540
     interrupt_pin:
       number: GPIO36
       mode: INPUT                 # 显式指定为输入模式
