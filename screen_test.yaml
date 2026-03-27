@@ -1,0 +1,104 @@
+# 全局变量
+substitutions:
+  device_name: m5paper
+  friendly_name: M5paper esphome
+
+  # 允许显示的字符集
+  allowed_characters: |-
+    一二三四五六七八九十百千万亿温度湿时间分秒你好世界我他和开心快乐屏幕测试·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
+ 
+# ESPHome 核心配置
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  min_version: 2025.5.0               # 要求的最低 ESPHome 版本
+  name_add_mac_suffix: true           # 在设备名后附加 MAC 地址
+  on_boot:
+    - priority: -100                  # 低优先级
+      then:
+        - it8951e.clear:
+            id: m5paper_display       # 清屏
+        - delay: 100ms                # 等待 100 毫秒确保清屏完成
+        - component.update: m5paper_display  # 手动触发屏幕刷新
+
+esp32:
+  board: m5stack_paper
+  flash_size: 16MB
+  framework:
+    type: esp-idf
+    advanced:
+      minimum_chip_revision: '3.1'    # 对应 ESP32-D0WD-V3
+
+# 外部自定义组件（本地路径）
+external_components:
+  - source:
+      type: local
+      path: components/           # 自定义组件目录（相对于本 YAML 文件）
+
+# 系统服务：日志、PSRAM、API、OTA
+logger:                           # 启用串口日志输出（用于调试）
+
+psram:                            # 启用 PSRAM（M5Paper 有外置 PSRAM，必须开启）
+
+api:                              # 启用 Home Assistant API（支持远程控制和状态同步）
+
+ota:
+  - platform: esphome
+
+# WiFi 设置
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: "HIGH"           # 深度节能（功耗低，稳定性差）
+
+# 字体配置
+font:
+  - file:
+      type: gfonts                  # 字体来源：谷歌字体
+      family: "Noto Sans SC"        # 字体家族：思源黑体（简体中文）
+      weight: 400                   # 字重：常规（Regular，400）
+      italic: false                 # 非斜体
+    id: cn_font                     # 字体唯一ID
+    size: 36                        # 字号：36
+    glyphs: ${allowed_characters}   # 只加载指定字符
+    ignore_missing_glyphs: true     # 忽略字体中缺失的字符，不报错
+  - file:
+      type: gfonts
+      family: "Noto Sans SC"
+      weight: 400
+      italic: false
+    id: big_font
+    size: 72
+    glyphs: ${allowed_characters}
+    ignore_missing_glyphs: true
+
+# SPI 总线
+spi:
+  clk_pin: GPIO14                 # SPI 时钟引脚
+  mosi_pin: GPIO12                # MOSI
+  miso_pin: GPIO13                # MISO
+
+# I2C 总线
+i2c:
+  sda: GPIO21                     # I2C 数据线
+  scl: GPIO22                     # I2C 时钟线
+
+# 显示屏：M5Paper ePaper（基于 IT8951 驱动芯片）
+display:
+  - platform: it8951e
+    id: m5paper_display
+    model: M5EPD
+    cs_pin: GPIO15                # 片选引脚
+    reset_pin: GPIO23             # 复位引脚
+    busy_pin: GPIO27              # 忙信号引脚
+    rotation: 0                   # 屏幕旋转角度，0是横向
+    reversed: False               # 不反转颜色
+    update_interval: never        # 不自动刷新，仅手动更新
+    # 在屏幕上绘制内容
+    lambda: |-
+      // 屏幕边缘画边框
+      it.rectangle(10, 10, it.get_width() - 20, it.get_height() - 20);
+      // 标题：顶部居中 —— 你好M5Paper
+      it.print(it.get_width()/2, 30, id(cn_font), TextAlign::TOP_CENTER, "你好EEPW");
+      it.print(it.get_width()/2, 100, id(big_font), TextAlign::TOP_CENTER, "M5paper 屏幕测试");
+
