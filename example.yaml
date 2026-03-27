@@ -105,16 +105,16 @@ display:
       it.rectangle(10, 10, it.get_width() - 20, it.get_height() - 20);
       
       // 2. 右上角显示电池电量（带 % 符号）
-      it.printf(it.get_width() - 20, 20, id(cn_font), TextAlign::TOP_RIGHT, "电量：%.0f%%", id(m5paper_battery_level).state);
+      it.printf(it.get_width() - 20, 16, id(cn_font), TextAlign::TOP_RIGHT, "电量：%.0f%%", id(m5paper_battery_level).state);
 
       // 3. 标题：顶部居中 —— 你好M5Paper
-      it.print(it.get_width()/2, 40, id(cn_font), TextAlign::TOP_CENTER, "你好M5Paper");
+      it.print(it.get_width()/2, 50, id(cn_font), TextAlign::TOP_CENTER, "你好M5Paper");
 
       // 4. 标题下方居中：完整时间（年月日 时分 星期）
-      it.strftime(it.get_width()/2, 200, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M %A", id(rtc_time).now());
+      it.strftime(it.get_width()/2, 150, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M %A", id(rtc_time).now());
 
       // 5. 时间下方居中：温度 湿度
-      it.printf(it.get_width()/2, 270, id(cn_font), TextAlign::TOP_CENTER, "温度：%.1f℃    湿度：%.1f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
+      it.printf(it.get_width()/2, 300, id(cn_font), TextAlign::TOP_CENTER, "温度：%.1f℃    湿度：%.1f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
 
 # 触摸屏：GT911 电容触摸芯片
 touchscreen:
@@ -125,6 +125,10 @@ touchscreen:
       number: GPIO36
       mode: INPUT                 # 显式指定为输入模式
       inverted: false             # GT911中断低电平有效
+    transform:
+      swap_xy: true
+      mirror_x: false
+      mirror_y: true
     on_touch:
       then:
         # 触摸测试
