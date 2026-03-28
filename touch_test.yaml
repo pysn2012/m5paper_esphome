@@ -5,7 +5,7 @@ substitutions:
 
   # 允许显示的字符集
   allowed_characters: |-
-    一二三四五六七八九十百千万亿温度湿时间分秒你好世界我他和开心快乐电量客厅·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
+    一二三四五六七八九十百千万亿温度湿时间分秒你好世界我他和开心快乐电量·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
  
 # ESPHome 核心配置
 esphome:
@@ -116,10 +116,6 @@ display:
       // 5. 时间下方居中：温度 湿度
       it.printf(it.get_width()/2, 300, id(cn_font), TextAlign::TOP_CENTER, "温度：%.1f℃    湿度：%.1f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
 
-      // 6. 小米温度
-      it.printf(it.get_width()/2, 400, id(cn_font), TextAlign::TOP_CENTER, "客厅温度：%.1f℃", id(xiaomi_temp).state);
-
-
 # 触摸屏：GT911 电容触摸芯片
 touchscreen:
   - platform: gt911
@@ -194,7 +190,7 @@ sensor:
       state_class: "measurement"
       icon: mdi:water-percent
     address: 0x44
-    update_interval: 60s
+    update_interval: 10s
   
   # 电池电量百分比（基于电压计算）
   - platform: template
@@ -214,8 +210,4 @@ sensor:
           min_value: 0
           max_value: 100
 
-  - platform: homeassistant
-    name: xiaomi temperature
-    entity_id: sensor.cleargras_cn_blt_3_u5c2qgggk400_dk1_temperature_p_2_1
-    id: xiaomi_temp
-    unit_of_measurement: "°C"
+
