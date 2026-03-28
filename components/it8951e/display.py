@@ -17,8 +17,10 @@ from esphome.const import (
     CONF_FULL_UPDATE_EVERY,
 )
 
+# 依赖组件：SPI
 DEPENDENCIES = ['spi']
 
+# 定义命名空间和类
 it8951e_ns = cg.esphome_ns.namespace('it8951e')
 IT8951ESensor = it8951e_ns.class_(
     'IT8951ESensor', cg.PollingComponent, spi.SPIDevice, display.DisplayBuffer, display.Display
@@ -29,10 +31,12 @@ DrawAction = it8951e_ns.class_("DrawAction", automation.Action)
 
 it8951eModel = it8951e_ns.enum("it8951eModel")
 
+# 支持的设备型号
 MODELS = {
     "M5EPD": it8951eModel.M5EPD
 }
 
+# 配置验证模式
 CONFIG_SCHEMA = cv.All(
     display.FULL_DISPLAY_SCHEMA.extend(
         {
@@ -56,11 +60,12 @@ CONFIG_SCHEMA = cv.All(
     .extend(spi.spi_device_schema()),
 )
 
-# `synchronous` kwarg was added in newer ESPHome; only pass it when supported
+# `synchronous` 关键字参数在较新的 ESPHome 版本中添加；仅在支持时传递
 _it8951e_action_synchronous = {}
 if cv.Version.parse(ESPHOME_VERSION) >= cv.Version.parse("2026.3.0"):
     _it8951e_action_synchronous["synchronous"] = True
 
+# 注册清屏动作
 @automation.register_action(
     "it8951e.clear",
     ClearAction,
@@ -71,6 +76,7 @@ if cv.Version.parse(ESPHOME_VERSION) >= cv.Version.parse("2026.3.0"):
     ),
     **_it8951e_action_synchronous
 )
+# 注册慢速更新动作
 @automation.register_action(
     "it8951e.updateslow",
     UpdateSlowAction,
@@ -81,7 +87,7 @@ if cv.Version.parse(ESPHOME_VERSION) >= cv.Version.parse("2026.3.0"):
     ),
     **_it8951e_action_synchronous
 )
-
+# 注册绘制动作
 @automation.register_action(
     "it8951e.draw",
     DrawAction,
@@ -92,19 +98,20 @@ if cv.Version.parse(ESPHOME_VERSION) >= cv.Version.parse("2026.3.0"):
     ),
     **_it8951e_action_synchronous
 )
-
+# 清屏动作代码生成
 async def it8951e_clear_to_code(config, action_id, template_arg, args):
     var = cg.new_Pvariable(action_id, template_arg)
     await cg.register_parented(var, config[CONF_ID])
     return var
-
+# 主代码生成函数
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
+    # 兼容旧版本 ESPHome
     if cv.Version.parse(ESPHOME_VERSION) < cv.Version.parse("2023.12.0"):
         await cg.register_component(var, config)
     await display.register_display(var, config)
     await spi.register_spi_device(var, config)
-
+    # 设置各配置参数
     if CONF_MODEL in config:
         cg.add(var.set_model(config[CONF_MODEL]))
     if CONF_LAMBDA in config:

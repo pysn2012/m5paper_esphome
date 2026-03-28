@@ -8,26 +8,26 @@
 namespace esphome::it8951e {
 
 enum class EPaperState : uint8_t {
-  IDLE,       // not doing anything
-  UPDATE,     // update the buffer
-  RESET,      // drive reset low (active)
-  RESET_END,  // drive reset high (inactive)
+  IDLE,       // 空闲状态（无任何操作）
+  UPDATE,     // 更新缓冲区
+  RESET,      // 拉低复位引脚（复位生效）
+  RESET_END,  // 拉高复位引脚（复位结束）
 
-  SHOULD_WAIT,     // states higher than this should wait for the display to be not busy
-  INITIALISE,      // send the init sequence
-  TRANSFER_DATA,   // transfer data to the display
-  POWER_ON,        // power on the display
-  REFRESH_SCREEN,  // send refresh command
-  POWER_OFF,       // power off the display
-  DEEP_SLEEP,      // deep sleep the display
+  SHOULD_WAIT,     // 此状态及以上需要等待显示屏退出忙状态
+  INITIALISE,      // 发送初始化序列
+  TRANSFER_DATA,   // 向显示屏传输数据
+  POWER_ON,        // 开启显示屏电源
+  REFRESH_SCREEN,  // 发送刷新命令
+  POWER_OFF,       // 关闭显示屏电源
+  DEEP_SLEEP,      // 显示屏进入深度睡眠
 };
-
-static constexpr uint32_t MAX_TRANSFER_TIME = 10;  // Transfer in 10ms blocks to allow the loop to run
+// 分10ms块传输数据，保证主循环能正常执行
+static constexpr uint32_t MAX_TRANSFER_TIME = 10;
 
 enum it8951eModel
 {
   M5EPD = 0,
-  it8951eModelsEND // MUST be last
+  it8951eModelsEND // 必须放在最后
 };
 
 #if ESPHOME_VERSION_CODE >= VERSION_CODE(2023, 12, 0)
@@ -41,83 +41,58 @@ class IT8951ESensor : public PollingComponent, public display::DisplayBuffer,
   float get_setup_priority() const override { return setup_priority::PROCESSOR; };
 
 /*
----------------------------------------- Refresh mode description
----------------------------------------- INIT The initialization (INIT) mode is
-used to completely erase the display and leave it in the white state. It is
-useful for situations where the display information in memory is not a faithful
-representation of the optical state of the display, for example, after the
-device receives power after it has been fully powered down. This waveform
-switches the display several times and leaves it in the white state.
+---------------------------------------- 刷新模式说明
+---------------------------------------- INIT 初始化（INIT）模式
+用于完全擦除显示屏并将其置为白色状态。适用于以下场景：当显示屏掉电后重新上电，
+内存中的显示信息无法准确反映显示屏的光学状态时。该波形会多次切换显示屏状态，
+最终将其置为白色。
 
 DU
-The direct update (DU) is a very fast, non-flashy update. This mode supports
-transitions from any graytone to black or white only. It cannot be used to
-update to any graytone other than black or white. The fast update time for this
-mode makes it useful for response to touch sensor or pen input or menu selection
-indictors.
+直接更新（DU）模式是一种极快、无闪烁的更新方式。此模式仅支持从任意灰度级切换到纯黑或纯白，
+无法更新到除黑白外的其他灰度级。其快速更新特性使其适用于触摸传感器/手写笔输入响应、
+菜单选择指示等场景。
 
 GC16
-The grayscale clearing (GC16) mode is used to update the full display and
-provide a high image quality. When GC16 is used with Full Display Update the
-entire display will update as the new image is written. If a Partial Update
-command is used the only pixels with changing graytone values will update. The
-GC16 mode has 16 unique gray levels.
+灰度清除（GC16）模式用于全屏幕更新，可提供高画质显示效果。当配合全屏更新命令使用时，
+整个屏幕会随新图像写入完成更新；若使用局部更新命令，则仅更新灰度值发生变化的像素。
+GC16模式支持16级独立灰度。
 
 GL16
-The GL16 waveform is primarily used to update sparse content on a white
-background, such as a page of anti-aliased text, with reduced flash. The GL16
-waveform has 16 unique gray levels.
+GL16波形主要用于更新白色背景上的稀疏内容（如整页抗锯齿文本），可减少闪烁。
+GL16模式支持16级独立灰度。
 
 GLR16
-The GLR16 mode is used in conjunction with an image preprocessing algorithm to
-update sparse content on a white background with reduced flash and reduced image
-artifacts. The GLR16 mode supports 16 graytones. If only the even pixel states
-are used (0, 2, 4, … 30), the mode will behave exactly as a traditional GL16
-waveform mode. If a separately-supplied image preprocessing algorithm is used,
-the transitions invoked by the pixel states 29 and 31 are used to improve
-display quality. For the AF waveform, it is assured that the GLR16 waveform data
-will point to the same voltage lists as the GL16 data and does not need to be
-stored in a separate memory.
+GLR16模式需配合图像预处理算法使用，用于更新白色背景上的稀疏内容，可减少闪烁和图像伪影。
+该模式支持16级灰度：若仅使用偶数像素状态（0,2,4,…30），其表现与传统GL16波形完全一致；
+若配合专用图像预处理算法，像素状态29和31触发的切换可提升显示质量。对于AF波形，
+GLR16波形数据与GL16指向相同的电压列表，无需单独存储。
 
 GLD16
-The GLD16 mode is used in conjunction with an image preprocessing algorithm to
-update sparse content on a white background with reduced flash and reduced image
-artifacts. It is recommended to be used only with the full display update. The
-GLD16 mode supports 16 graytones. If only the even pixel states are used (0, 2,
-4, … 30), the mode will behave exactly as a traditional GL16 waveform mode. If a
-separately-supplied image preprocessing algorithm is used, the transitions
-invoked by the pixel states 29 and 31 are used to refresh the background with a
-lighter flash compared to GC16 mode following a predetermined pixel map as
-encoded in the waveform file, and reduce image artifacts even more compared to
-the GLR16 mode. For the AF waveform, it is assured that the GLD16 waveform data
-will point to the same voltage lists as the GL16 data and does not need to be
-stored in a separate memory.
+GLD16模式需配合图像预处理算法使用，用于更新白色背景上的稀疏内容，可减少闪烁和图像伪影。
+建议仅配合全屏更新命令使用。该模式支持16级灰度：若仅使用偶数像素状态（0,2,4,…30），
+其表现与传统GL16波形完全一致；若配合专用图像预处理算法，像素状态29和31触发的切换可
+按照波形文件中编码的预设像素映射表刷新背景（闪烁程度低于GC16模式），相比GLR16模式能
+进一步减少图像伪影。对于AF波形，GLD16波形数据与GL16指向相同的电压列表，无需单独存储。
 
 DU4
-The DU4 is a fast update time (similar to DU), non-flashy waveform. This mode
-supports transitions from any gray tone to gray tones 1,6,11,16 represented by
-pixel states [0 10 20 30]. The combination of fast update time and four gray
-tones make it useful for anti-aliased text in menus. There is a moderate
-increase in ghosting compared with GC16.
+DU4模式更新速度快（与DU相当）、无闪烁。该模式支持从任意灰度级切换到灰度级1、6、11、16
+（对应像素状态[0 10 20 30]）。快速更新+四级灰度的特性使其适用于菜单中的抗锯齿文本显示，
+相比GC16模式会有一定程度的残影增加。
 
 A2
-The A2 mode is a fast, non-flash update mode designed for fast paging turning or
-simple black/white animation. This mode supports transitions from and to black
-or white only. It cannot be used to update to any graytone other than black or
-white. The recommended update sequence to transition into repeated A2 updates is
-shown in Figure 1. The use of a white image in the transition from 4-bit to
-1-bit images will reduce ghosting and improve image quality for A2 updates.
-
+A2模式是一种快速、无闪烁的更新模式，专为快速翻页或简单黑白动画设计。此模式仅支持在黑白之间切换，
+无法更新到其他灰度级。建议的A2重复更新过渡序列见图1：从4位图像切换到1位图像时，
+先显示白色图像可减少残影并提升A2更新的图像质量。
 */
 
   struct IT8951DevInfo_s
   {
-      int usPanelW;
-      int usPanelH;
-      uint16_t usImgBufAddrL;
-      uint16_t usImgBufAddrH;
-      char usFWVersion[16];
-      char usLUTVersion[16];
+      int usPanelW;          // 面板宽度
+      int usPanelH;          // 面板高度
+      uint16_t usImgBufAddrL;// 图像缓冲区地址低位
+      uint16_t usImgBufAddrH;// 图像缓冲区地址高位
+      char usFWVersion[16];  // 固件版本
+      char usLUTVersion[16]; // LUT版本
   };
 
   struct IT8951Dev_s
@@ -126,18 +101,18 @@ shown in Figure 1. The use of a white image in the transition from 4-bit to
       display::DisplayType displayType;
   };
 
-  enum update_mode_e         //             Typical
-  {                          //   Ghosting  Update Time  Usage
-      UPDATE_MODE_INIT = 0,  // * N/A       2000ms       Display initialization,
-      UPDATE_MODE_DU   = 1,  //   Low       260ms        Monochrome menu, text input, and touch screen input
-      UPDATE_MODE_GC16 = 2,  // * Very Low  450ms        High quality images
-      UPDATE_MODE_GL16 = 3,  // * Medium    450ms        Text with white background
-      UPDATE_MODE_GLR16 = 4, //   Low       450ms        Text with white background
-      UPDATE_MODE_GLD16 = 5, //   Low       450ms        Text and graphics with white background
-      UPDATE_MODE_DU4 = 6,   // * Medium    120ms        Fast page flipping at reduced contrast
-      UPDATE_MODE_A2 = 7,    //   Medium    290ms        Anti-aliased text in menus / touch and screen input
-      UPDATE_MODE_NONE = 8
-  };  // The ones marked with * are more commonly used
+  enum update_mode_e         //             典型特性
+  {                          //   残影  更新时间    适用场景
+      UPDATE_MODE_INIT = 0,  // * 无    2000ms      显示屏初始化
+      UPDATE_MODE_DU   = 1,  //   低    260ms       单色菜单、文本输入、触摸屏输入
+      UPDATE_MODE_GC16 = 2,  // * 极低  450ms       高质量图像显示
+      UPDATE_MODE_GL16 = 3,  // * 中等  450ms       白色背景文本显示
+      UPDATE_MODE_GLR16 = 4, //   低    450ms       白色背景文本显示
+      UPDATE_MODE_GLD16 = 5, //   低    450ms       白色背景文本和图形显示
+      UPDATE_MODE_DU4 = 6,   // * 中等  120ms       快速翻页（对比度降低）
+      UPDATE_MODE_A2 = 7,    //   中等  290ms       菜单抗锯齿文本/触摸屏幕输入
+      UPDATE_MODE_NONE = 8   // 无更新
+  };  // 标*的为更常用模式
 
   void set_reset_pin(GPIOPin *reset) { this->reset_pin_ = reset; }
   void set_busy_pin(GPIOPin *busy) { this->busy_pin_ = busy; }
@@ -148,82 +123,85 @@ shown in Figure 1. The use of a white image in the transition from 4-bit to
   void set_sleep_when_done(bool sleep_when_done) { this->sleep_when_done_ = sleep_when_done; }
   void set_full_update_every(uint32_t full_update_every) { this->full_update_every_ = full_update_every; }
 
-  void setup() override;
-  void loop() override;
-  void update() override;
-  void update_slow();
-  void dump_config() override;
-
+  void setup() override;    // 初始化设置
+  void loop() override;     // 主循环
+  void update() override;   // 快速更新
+  void update_slow();       // 慢速更新
+  void dump_config() override; // 打印配置信息
+  // 获取显示类型
   display::DisplayType get_display_type() override { return IT8951DevAll[this->model_].displayType; }
 
-  void clear(bool init);
+  void clear(bool init);// 清屏（init=true时执行初始化清屏）
 
-  void fill(Color color) override;
-  void draw_pixel_at(int x, int y, Color color) override;
-  void write_display(update_mode_e mode);
+  void fill(Color color) override;// 填充指定颜色
+  void draw_pixel_at(int x, int y, Color color) override;// 在指定坐标绘制像素
+  void write_display(update_mode_e mode);// 按指定模式写入显示内容
 
  protected:
-  void draw_absolute_pixel_internal(int x, int y, Color color) override;
+  void draw_absolute_pixel_internal(int x, int y, Color color) override; // 内部绝对坐标像素绘制实现
 
   int get_width_internal() override { return usPanelW_; };
 
   int get_height_internal() override { return usPanelH_; };
 
-  uint32_t get_buffer_length_();
+  uint32_t get_buffer_length_();// 获取缓冲区长度
 
 
  private:
+  // 设备型号配置表
   struct IT8951Dev_s IT8951DevAll[it8951eModel::it8951eModelsEND]
-  { // it8951eModel::M5EPD
-    960,    // .devInfo.usPanelW
-    540,    // .devInfo.usPanelH
-    0x36E0, // .devInfo.usImgBufAddrL
-    0x0012, // .devInfo.usImgBufAddrH
-    "",     // .devInfo.usFWVersion
-    "",     // .devInfo.usLUTVersion
-    display::DisplayType::DISPLAY_TYPE_GRAYSCALE // .displayType (M5EPD supports 16 gray scale levels)
+  { // it8951eModel::M5EPD 型号配置
+    960,    // .devInfo.usPanelW - 面板宽度
+    540,    // .devInfo.usPanelH - 面板高度
+    0x36E0, // .devInfo.usImgBufAddrL - 图像缓冲区地址低位
+    0x0012, // .devInfo.usImgBufAddrH - 图像缓冲区地址高位
+    "",     // .devInfo.usFWVersion - 固件版本（预留）
+    "",     // .devInfo.usLUTVersion - LUT版本（预留）
+    display::DisplayType::DISPLAY_TYPE_GRAYSCALE // .displayType (M5EPD支持16级灰度)
   };
 
-  int max_x = 0;
-  int max_y = 0;
-  int min_x = 960;
-  int min_y = 540;
-  uint16_t m_endian_type = 0;
-  uint16_t m_pix_bpp = 0;
-  uint8_t _it8951_rotation = 0;
+  int max_x = 0;            // 最大X坐标（更新区域）
+  int max_y = 0;            // 最大Y坐标（更新区域）
+  int min_x = 960;          // 最小X坐标（更新区域）
+  int min_y = 540;          // 最小Y坐标（更新区域）
+  uint16_t m_endian_type = 0; // 字节序类型
+  uint16_t m_pix_bpp = 0;   // 像素位深度
+  uint8_t _it8951_rotation = 0; // 旋转角度
 
-  GPIOPin *reset_pin_{nullptr};
-  GPIOPin *busy_pin_{nullptr};
+  GPIOPin *reset_pin_{nullptr}; // 复位引脚
+  GPIOPin *busy_pin_{nullptr};  // 忙状态引脚
 
-  int usPanelW_{0};
-  int usPanelH_{0};
-  bool reversed_{false};
-  uint32_t reset_duration_{100};
-  bool sleep_when_done_{true}; // If true, the display will go to sleep after each update
-  uint32_t full_update_every_{60}; // Full screen refresh every 60 updates
-  uint32_t partial_update_{0}; // Partial update counter
-  enum it8951eModel model_{it8951eModel::M5EPD};
+  int usPanelW_{0};         // 面板宽度
+  int usPanelH_{0};         // 面板高度
+  bool reversed_{false};    // 是否反转显示
+  uint32_t reset_duration_{100}; // 复位持续时间（默认100ms）
+  bool sleep_when_done_{true}; // 更新完成后是否休眠（默认开启）
+  uint32_t full_update_every_{60}; // 每60次更新执行一次全屏更新
+  uint32_t partial_update_{0}; // 局部更新计数器
+  enum it8951eModel model_{it8951eModel::M5EPD}; // 默认设备型号
 
-  void reset(void);
+  void reset(void); // 执行复位操作
 
-  /* 1000ms timeout because I've seen it take up to 750ms (and ~310ms on average)
-   * Mostly for screen sleep and run commands */
-  void wait_busy(uint32_t timeout = 1000);
-  void check_busy(uint32_t timeout = 1000);
+  /* 1000ms超时设置：实测最长耗时约750ms（平均约310ms）
+   * 主要用于屏幕休眠和命令执行等待
+   */
+  void wait_busy(uint32_t timeout = 1000);  // 等待忙状态结束
+  void check_busy(uint32_t timeout = 1000); // 检查忙状态
 
-  uint16_t get_vcom();
-  void set_vcom(uint16_t vcom);
+  uint16_t get_vcom();      // 获取VCOM电压值
+  void set_vcom(uint16_t vcom); // 设置VCOM电压值
 
-  // comes from ref driver code from waveshare
-  uint16_t read_word();
+  // 来自Waveshare官方参考驱动代码
+  uint16_t read_word();     // 读取16位数据
 
-  void write_two_byte16(uint16_t type, uint16_t cmd);
-  void write_command(uint16_t cmd);
-  void write_word(uint16_t cmd);
-  void write_reg(uint16_t addr, uint16_t data);
+  void write_two_byte16(uint16_t type, uint16_t cmd); // 写入两个16位数据
+  void write_command(uint16_t cmd); // 写入命令
+  void write_word(uint16_t cmd);    // 写入16位数据
+  void write_reg(uint16_t addr, uint16_t data); // 写入寄存器
+  // 设置目标内存地址
   void set_target_memory_addr(uint16_t tar_addrL, uint16_t tar_addrH);
   void write_args(uint16_t cmd, uint16_t *args, uint16_t length);
-
+  // 设置更新区域
   void set_area(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
   void update_area(uint16_t x, uint16_t y, uint16_t w,
                     uint16_t h, update_mode_e mode);
@@ -238,37 +216,37 @@ shown in Figure 1. The use of a white image in the transition from 4-bit to
   bool is_display_busy_();
   uint8_t color_to_nibble_(const Color &color) const;
 
-  EPaperState state_{EPaperState::IDLE};
-  uint32_t delay_until_{0};
-  bool waiting_for_idle_{false};
-  bool initialized_{false};
+  EPaperState state_{EPaperState::IDLE}; // 当前状态（默认空闲）
+  uint32_t delay_until_{0};             // 延迟执行时间戳
+  bool waiting_for_idle_{false};        // 是否等待空闲状态
+  bool initialized_{false};             // 是否已完成初始化
 
-  update_mode_e pending_mode_{update_mode_e::UPDATE_MODE_NONE};
-  uint16_t pending_x_{0};
-  uint16_t pending_y_{0};
-  uint16_t pending_w_{0};
-  uint16_t pending_h_{0};
-  uint16_t transfer_row_{0};
-  uint32_t draw_calls_since_yield_{0};
-  uint32_t update_started_at_{0};
-  bool update_timing_active_{false};
-  bool did_init_clear_{false};
-  uint32_t clear_count_{0};
-  static constexpr uint32_t INIT_CLEAR_EVERY = 12;
-  bool update_pending_{false};
-  update_mode_e queued_update_mode_{update_mode_e::UPDATE_MODE_NONE};
+  update_mode_e pending_mode_{update_mode_e::UPDATE_MODE_NONE}; // 待执行的更新模式
+  uint16_t pending_x_{0};               // 待更新区域X坐标
+  uint16_t pending_y_{0};               // 待更新区域Y坐标
+  uint16_t pending_w_{0};               // 待更新区域宽度
+  uint16_t pending_h_{0};               // 待更新区域高度
+  uint16_t transfer_row_{0};            // 当前传输行
+  uint32_t draw_calls_since_yield_{0};  // 自上次让步后的绘制调用次数
+  uint32_t update_started_at_{0};       // 更新开始时间戳
+  bool update_timing_active_{false};    // 更新计时是否激活
+  bool did_init_clear_{false};          // 是否执行过初始化清屏
+  uint32_t clear_count_{0};             // 清屏计数器
+  static constexpr uint32_t INIT_CLEAR_EVERY = 12; // 每12次执行一次初始化清屏
+  bool update_pending_{false};          // 是否有待执行的更新
+  update_mode_e queued_update_mode_{update_mode_e::UPDATE_MODE_NONE}; // 排队等待的更新模式
 };
-
+// 清屏动作类
 template<typename... Ts> class ClearAction : public Action<Ts...>, public Parented<IT8951ESensor> {
  public:
   void play(const Ts &... x) override { this->parent_->clear(true); }
 };
-
+// 慢速更新动作类
 template<typename... Ts> class UpdateSlowAction : public Action<Ts...>, public Parented<IT8951ESensor> {
  public:
   void play(const Ts &... x) override { this->parent_->update_slow(); }
 };
-
+// 绘制动作类（DU模式）
 template<typename... Ts> class DrawAction : public Action<Ts...>, public Parented<IT8951ESensor> {
  public:
   void play(const Ts &... x) override { this->parent_->write_display(IT8951ESensor::UPDATE_MODE_DU); }

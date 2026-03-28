@@ -8,6 +8,7 @@ namespace esphome::it8951e {
 
 static const char *TAG = "it8951e.display";
 
+// 写16位类型+16位命令
 void IT8951ESensor::write_two_byte16(uint16_t type, uint16_t cmd) {
     this->wait_busy();
     this->enable();
@@ -19,13 +20,14 @@ void IT8951ESensor::write_two_byte16(uint16_t type, uint16_t cmd) {
     this->disable();
 }
 
+// 读16位数据
 uint16_t IT8951ESensor::read_word() {
     this->wait_busy();
     this->enable();
     this->write_byte16(IT8951_PACKET_TYPE_READ);
     this->wait_busy();
 
-    // dummy
+    // 哑元写入（协议要求）
     this->write_byte16(0x0000);
     this->wait_busy();
 
@@ -37,14 +39,15 @@ uint16_t IT8951ESensor::read_word() {
     return word;
 }
 
+// 发送命令
 void IT8951ESensor::write_command(uint16_t cmd) {
     this->write_two_byte16(IT8951_PACKET_TYPE_CMD, cmd);
 }
-
+// 写16位数据
 void IT8951ESensor::write_word(uint16_t cmd) {
     this->write_two_byte16(IT8951_PACKET_TYPE_WRITE, cmd);
 }
-
+// 写寄存器
 void IT8951ESensor::write_reg(uint16_t addr, uint16_t data) {
     this->write_command(IT8951_TCON_REG_WR);  // tcon write reg command
     this->wait_busy();
@@ -56,12 +59,12 @@ void IT8951ESensor::write_reg(uint16_t addr, uint16_t data) {
     this->write_byte16(data);
     this->disable();
 }
-
+// 设置目标内存地址
 void IT8951ESensor::set_target_memory_addr(uint16_t tar_addrL, uint16_t tar_addrH) {
     this->write_reg(IT8951_LISAR + 2, tar_addrH);
     this->write_reg(IT8951_LISAR, tar_addrL);
 }
-
+// 写命令+参数
 void IT8951ESensor::write_args(uint16_t cmd, uint16_t *args, uint16_t length) {
     this->write_command(cmd);
     // Batch all args in a single SPI transaction
@@ -74,7 +77,7 @@ void IT8951ESensor::write_args(uint16_t cmd, uint16_t *args, uint16_t length) {
     }
     this->disable();
 }
-
+// 设置图像区域(全屏/局部)
 void IT8951ESensor::set_area(uint16_t x, uint16_t y, uint16_t w,
                                   uint16_t h) {
 
@@ -95,7 +98,7 @@ void IT8951ESensor::set_area(uint16_t x, uint16_t y, uint16_t w,
         this->write_args(IT8951_TCON_LD_IMG_AREA, args, sizeof(args) / sizeof(args[0]));
     }
 }
-
+// 等待忙信号
 void IT8951ESensor::wait_busy(uint32_t timeout) {
     const uint32_t start_time = millis();
     while (1) {
@@ -109,13 +112,13 @@ void IT8951ESensor::wait_busy(uint32_t timeout) {
         }
     }
 }
-
+// 判断屏幕是否忙
 bool IT8951ESensor::is_display_busy_() {
     this->write_command(IT8951_TCON_REG_RD);
     this->write_word(IT8951_LUTAFSR);
     return this->read_word() != 0;
 }
-
+// 刷新指定区域
 void IT8951ESensor::update_area(uint16_t x, uint16_t y, uint16_t w, uint16_t h, update_mode_e mode) {
     uint16_t args[7];
     args[0] = x;
@@ -128,7 +131,7 @@ void IT8951ESensor::update_area(uint16_t x, uint16_t y, uint16_t w, uint16_t h, 
 
     this->write_args(IT8951_I80_CMD_DPY_BUF_AREA, args, sizeof(args) / sizeof(args[0]));
 }
-
+// 复位屏幕
 void IT8951ESensor::reset(void) {
     this->reset_pin_->digital_write(true);
     this->reset_pin_->digital_write(false);
@@ -136,12 +139,12 @@ void IT8951ESensor::reset(void) {
     this->reset_pin_->digital_write(true);
     delay(100);
 }
-
+// 获取缓冲区长度
 uint32_t IT8951ESensor::get_buffer_length_() {
     // 4bpp: two pixels per byte
     return (this->get_width_internal() >> 1) * this->get_height_internal();
 }
-
+// 读取VCOM电压
 uint16_t IT8951ESensor::get_vcom() {
     this->write_command(IT8951_I80_CMD_VCOM); // tcon vcom get command
     this->write_word(IT8951_I80_CMD_VCOM_READ);
@@ -149,13 +152,13 @@ uint16_t IT8951ESensor::get_vcom() {
     ESP_LOGI(TAG, "VCOM = %.02fV", (float)vcom/1000);
     return vcom;
 }
-
+// 设置VCOM电压
 void IT8951ESensor::set_vcom(uint16_t vcom) {
     this->write_command(IT8951_I80_CMD_VCOM); // tcon vcom set command
     this->write_word(IT8951_I80_CMD_VCOM_WRITE);
     this->write_word(vcom);
 }
-
+// 屏幕初始化
 void IT8951ESensor::setup() {
     ESP_LOGCONFIG(TAG, "Init Starting.");
     this->spi_setup();
@@ -189,7 +192,7 @@ void IT8951ESensor::setup() {
 
     ESP_LOGCONFIG(TAG, "Init Done.");
 }
-
+// 主循环
 void IT8951ESensor::loop() {
     const auto now = millis();
     if (static_cast<int32_t>(now - this->delay_until_) < 0)
@@ -203,11 +206,11 @@ void IT8951ESensor::loop() {
     }
     this->process_state_();
 }
-
+// 是否空闲
 bool IT8951ESensor::is_idle_() const {
     return this->busy_pin_ == nullptr || this->busy_pin_->digital_read();
 }
-
+// 设置状态
 void IT8951ESensor::set_state_(EPaperState state, uint16_t delay) {
     this->state_ = state;
     this->delay_until_ = millis() + delay;
@@ -224,7 +227,7 @@ void IT8951ESensor::set_state_(EPaperState state, uint16_t delay) {
         this->disable_loop();
     }
 }
-
+// 准备传输(局部/全屏)
 bool IT8951ESensor::prepare_transfer_(update_mode_e &mode) {
     this->partial_update_++;
     if (this->full_update_every_ > 0 && this->partial_update_ >= this->full_update_every_) {
@@ -273,7 +276,7 @@ bool IT8951ESensor::prepare_transfer_(update_mode_e &mode) {
     ESP_LOGD(TAG, "Transfer queued: %d x %d @ %d,%d mode=%d", width, height, x, y, static_cast<int>(mode));
     return true;
 }
-
+// 传输行数据
 bool IT8951ESensor::transfer_row_data_() {
     this->m_endian_type = IT8951_LDIMG_B_ENDIAN;
     this->m_pix_bpp = IT8951_4BPP;
@@ -318,7 +321,7 @@ bool IT8951ESensor::transfer_row_data_() {
 
     return this->transfer_row_ >= this->pending_h_;
 }
-
+// 状态机处理
 void IT8951ESensor::process_state_() {
     switch (this->state_) {
     case EPaperState::IDLE:
@@ -387,7 +390,7 @@ void IT8951ESensor::process_state_() {
         break;
     }
 }
-
+// 执行显示刷新
 void IT8951ESensor::write_display(update_mode_e mode) {
     if (!this->initialized_ || this->state_ != EPaperState::IDLE)
         return;
@@ -402,9 +405,7 @@ void IT8951ESensor::write_display(update_mode_e mode) {
     this->set_state_(this->sleep_when_done_ ? EPaperState::POWER_ON : EPaperState::TRANSFER_DATA);
 }
 
-/** @brief Clear graphics buffer
- * @param init Screen initialization, If is 0, clear the buffer without initializing
- */
+// 清屏
 void IT8951ESensor::clear(bool init) {
     Display::clear();
 
@@ -418,7 +419,7 @@ void IT8951ESensor::clear(bool init) {
     this->clear_count_++;
     this->write_display(clear_mode);
 }
-
+// 快速局部刷新
 void IT8951ESensor::update() {
     if (!this->is_ready() || !this->initialized_)
         return;
@@ -433,7 +434,7 @@ void IT8951ESensor::update() {
         this->queued_update_mode_ = update_mode_e::UPDATE_MODE_DU;
     }
 }
-
+// 全屏高质量刷新
 void IT8951ESensor::update_slow() {
     if (!this->is_ready() || !this->initialized_)
         return;
@@ -448,7 +449,7 @@ void IT8951ESensor::update_slow() {
         this->queued_update_mode_ = update_mode_e::UPDATE_MODE_GC16;
     }
 }
-
+// 颜色转4位灰度
 uint8_t IT8951ESensor::color_to_nibble_(const Color &color) const {
     // Fast path for the two most common colors (avoids all arithmetic)
     if (color.raw_32 == 0)          return 0x00;  // COLOR_OFF → white
@@ -471,7 +472,7 @@ uint8_t IT8951ESensor::color_to_nibble_(const Color &color) const {
     }
     return nibble;
 }
-
+// 填充颜色
 void IT8951ESensor::fill(Color color) {
     uint8_t packed_color = this->color_to_nibble_(color);
     if (!this->reversed_) {
@@ -484,7 +485,7 @@ void IT8951ESensor::fill(Color color) {
     this->min_x = 0;
     this->min_y = 0;
 }
-
+// 画像素点
 void HOT IT8951ESensor::draw_pixel_at(int x, int y, Color color) {
     if (!Display::get_clipping().inside(x, y))
     return;  // NOLINT
@@ -510,7 +511,7 @@ void HOT IT8951ESensor::draw_pixel_at(int x, int y, Color color) {
     // Removed compare to original function to speed up drawing
     // App.feed_wdt();
 }
-
+// 内部画点(自动记录局部区域)
 void HOT IT8951ESensor::draw_absolute_pixel_internal(int x, int y, Color color) {
     // Fast path: bounds and buffer check first
     if (x < 0 || y < 0 || this->buffer_ == nullptr || x >= this->usPanelW_ || y >= this->usPanelH_) {
@@ -554,14 +555,14 @@ void HOT IT8951ESensor::draw_absolute_pixel_internal(int x, int y, Color color) 
         this->min_y = y;
     }
 }
-
+// 设置型号
 void IT8951ESensor::set_model(it8951eModel model) {
     this->model_ = model;
     // Provide fast access to panel width and height
     usPanelW_ = IT8951DevAll[model].devInfo.usPanelW;
     usPanelH_ = IT8951DevAll[model].devInfo.usPanelH;
 }
-
+// 输出配置
 void IT8951ESensor::dump_config() {
     LOG_DISPLAY("", "IT8951E", this);
     switch (this->model_) {

@@ -73,9 +73,34 @@ font:
       weight: 400
       italic: false
     id: big_font
-    size: 72
+    size: 56
     glyphs: ${allowed_characters}
     ignore_missing_glyphs: true
+  - file: "gfonts://Material+Symbols+Outlined"
+    id: icons_gfont
+    size: 36
+    glyphs: ["\U0000e425"] # mdi-timer
+  - file: "fonts/materialdesignicons-webfont.ttf"
+    id: icons_font
+    size: 36
+    glyphs:
+      - "\U000F007A"  # 10%
+      - "\U000F007B"  # 20%
+      - "\U000F007C"  # 30%
+      - "\U000F007D"  # 40%
+      - "\U000F007E"  # 50%
+      - "\U000F007F"  # 60%
+      - "\U000F0080"  # 70%
+      - "\U000F0081"  # 80%
+      - "\U000F0082"  # 90%
+      - "\U000F0079"  # 满电量
+      - "\U000F02DC"  # 小房子
+      - "\U000F050F"  # 温度计
+      - "\U000F058E"  # 湿度
+      - "\U000F0290"  # 冰箱
+      - "\U000F0F92"  # 热水器
+      - "\U000F140B"  # 闪电
+      - "\U000F1A57"  # 电量
 
 # SPI 总线
 spi:
@@ -101,24 +126,88 @@ display:
     update_interval: never        # 不自动刷新，仅手动更新
     # 在屏幕上绘制内容
     lambda: |-
-      // 1. 屏幕边缘画边框
+      // 背景清白（可选，IT8951 默认白色）
+      it.fill(COLOR_WHITE);
+
+      // === 1. 顶部时间（大字居中）===
+      it.strftime(it.get_width() / 2, 20, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M", id(rtc_time).now());
+
+      // === 2. 星期（紧接时间下方，小字居中）===
+      auto wday = id(rtc_time).now().strftime("%w");
+      const char* weekdays[] = {"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"};
+      int wd = std::min(6, std::max(0, (int)std::stoi(wday)));
+      it.print(it.get_width() / 2, 90, id(cn_font), TextAlign::TOP_CENTER, weekdays[wd]);
+
+      // === 3. 电池图标（右上角）===
+      float bat_pct = id(m5paper_battery_level).state;
+      const char* bat_icon = "\U000F007A"; // 10% (最低)
+      if (!isnan(bat_pct)) {
+        if (bat_pct >= 95) bat_icon = "\U000F0079"; // 满电
+        else if (bat_pct >= 85) bat_icon = "\U000F0082"; // 90%
+        else if (bat_pct >= 75) bat_icon = "\U000F0081"; // 80%
+        else if (bat_pct >= 65) bat_icon = "\U000F0080"; // 70%
+        else if (bat_pct >= 55) bat_icon = "\U000F007F"; // 60%
+        else if (bat_pct >= 45) bat_icon = "\U000F007E"; // 50%
+        else if (bat_pct >= 35) bat_icon = "\U000F007D"; // 40%
+        else if (bat_pct >= 25) bat_icon = "\U000F007C"; // 30%
+        else if (bat_pct >= 15) bat_icon = "\U000F007B"; // 20%
+        else bat_icon = "\U000F007A"; // 10%
+      }
+      it.print(it.get_width() - 10, 25, id(icons_font), TextAlign::TOP_RIGHT, bat_icon);
+
+      // 起始 Y 坐标（从 140 开始逐行向下）
+      int y_offset = 140;
+      const int line_height = 50;
+
+      // === 4. 客厅温湿度 ===
+      if (!isnan(id(xiaomi_temp).state) && !isnan(id(xiaomi_humi).state)) {
+        it.print(30, y_offset, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC"); // 小房子
+        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "客厅：%.1f℃ / %.0f%%", id(xiaomi_temp).state, id(xiaomi_humi).state);
+        y_offset += line_height;
+      }
+
+      // === 5. 冰箱温度（冷藏 + 冷冻）===
+      if (!isnan(id(icebox_temp01).state) && !isnan(id(icebox_temp02).state)) {
+        it.print(30, y_offset, id(icons_font), TextAlign::TOP_LEFT, "\U000F0290"); // 冰箱
+        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "冰箱：冷藏 %.1f℃ / 冷冻 %.1f℃", id(icebox_temp01).state, id(icebox_temp02).state);
+        y_offset += line_height;
+      }
+
+      // === 6. 热水器温度 ===
+      // 注意：water_heater.* 实体通常不直接提供数值！
+      // 如果显示 nan，请改用对应的 sensor.* 实体 ID
+      if (!isnan(id(water_heater_temp).state)) {
+        it.print(30, y_offset, id(icons_font), TextAlign::TOP_LEFT, "\U000F0F92"); // 热水器
+        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "热水器：%.1f℃", id(water_heater_temp).state);
+        y_offset += line_height;
+      }
+
+      // === 7. 排插功率 & 总电量 ===
+      bool has_power = !isnan(id(cmpower_power).state);
+      bool has_energy = !isnan(id(total_power).state);
+      if (has_power || has_energy) {
+        it.print(30, y_offset, id(icons_font), TextAlign::TOP_LEFT, "\U000F140B"); // 闪电（代表电力）
+        char buf[100] = "排插：";
+        if (has_power) {
+          sprintf(buf + strlen(buf), "%.0fW", id(cmpower_power).state);
+        } else {
+          strcat(buf, "--W");
+        }
+        if (has_energy) {
+          sprintf(buf + strlen(buf), " / 总电量：%.0fWh", id(total_power).state);
+        }
+        it.print(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, buf);
+        y_offset += line_height;
+      }
+
+      // === 8. 本机温湿度（固定在底部）===
+      if (!isnan(id(m5paper_temperature).state) && !isnan(id(m5paper_humidity).state)) {
+        it.print(30, 480, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F"); // 温度计
+        it.printf(80, 480, id(cn_font), TextAlign::TOP_LEFT, "本机：%.1f℃ / %.0f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
+      }
+
+      // 可选：边框
       it.rectangle(10, 10, it.get_width() - 20, it.get_height() - 20);
-      
-      // 2. 右上角显示电池电量（带 % 符号）
-      it.printf(it.get_width() - 20, 16, id(cn_font), TextAlign::TOP_RIGHT, "电量：%.0f%%", id(m5paper_battery_level).state);
-
-      // 3. 标题：顶部居中 —— 你好M5Paper
-      it.print(it.get_width()/2, 50, id(cn_font), TextAlign::TOP_CENTER, "你好M5Paper");
-
-      // 4. 标题下方居中：完整时间（年月日 时分 星期）
-      it.strftime(it.get_width()/2, 150, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M %A", id(rtc_time).now());
-
-      // 5. 时间下方居中：温度 湿度
-      it.printf(it.get_width()/2, 300, id(cn_font), TextAlign::TOP_CENTER, "温度：%.1f℃    湿度：%.1f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
-
-      // 6. 小米温度
-      it.printf(it.get_width()/2, 400, id(cn_font), TextAlign::TOP_CENTER, "客厅温度：%.1f℃", id(xiaomi_temp).state);
-
 
 # 触摸屏：GT911 电容触摸芯片
 touchscreen:
@@ -214,8 +303,45 @@ sensor:
           min_value: 0
           max_value: 100
 
+  # 小米温湿度计
   - platform: homeassistant
     name: xiaomi temperature
     entity_id: sensor.cleargras_cn_blt_3_u5c2qgggk400_dk1_temperature_p_2_1
     id: xiaomi_temp
     unit_of_measurement: "°C"
+  - platform: homeassistant
+    name: xiaomi humidity
+    id: xiaomi_humi
+    entity_id: sensor.cleargras_cn_blt_3_u5c2qgggk400_dk1_relative_humidity_p_2_2
+
+  # 热水器温度
+  - platform: homeassistant
+    name: water_heater temperature
+    entity_id: water_heater.viomi_cn_273765712_e4_s_2_water_heater
+    id: water_heater_temp
+    unit_of_measurement: "°C"
+
+  # 冰箱温度
+  - platform: homeassistant
+    name: icebox temp01
+    entity_id: sensor.viomi_cn_246891354_u37_temperature_p_3_1
+    id: icebox_temp01
+    unit_of_measurement: "°C"
+  - platform: homeassistant
+    name: icebox temp02
+    entity_id: sensor.viomi_cn_246891354_u37_temperature_p_4_1
+    id: icebox_temp02
+    unit_of_measurement: "°C"
+
+  # 排插功率
+  - platform: homeassistant
+    name: cmpower power
+    entity_id: sensor.cmpower_w1_270cee_24_gong_lu
+    id: cmpower_power
+    unit_of_measurement: "W"
+  - platform: homeassistant
+    name: total power
+    entity_id: sensor.cmpower_w1_270cee_29_zong_dian_liang
+    id: total_power
+    unit_of_measurement: "Wh"
+
