@@ -31,7 +31,6 @@ jobs:
           cat > secrets.yaml <<EOF
           wifi_ssid: "${{ secrets.WIFI_SSID }}"
           wifi_password: "${{ secrets.WIFI_PASSWORD }}"
-          ota_key: "${{ secrets.OTA_KEY }}"
           EOF
 
       # 步骤4：编译m5paper_esphome固件
@@ -65,5 +64,5 @@ jobs:
             ${{ steps.find_fw.outputs.FIRMWARE }}
             ${{ steps.find_fw.outputs.OTA }}
             ${{ steps.find_fw.outputs.FACTORY }}
-            m5paper_esphome.yaml
+            example.yaml
           retention-days: 30
