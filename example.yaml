@@ -5,7 +5,7 @@ substitutions:
 
   # 允许显示的字符集
   allowed_characters: |-
-    一二三四五六七八九十百千万亿星期温度湿时间日分秒你好世界我他和开心快乐总电量客厅热水器冰箱冷冻藏排插本机·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
+    一二三四五六七八九十百千万亿星期温度湿时间日分秒你好世界我他和开心快乐总电量客厅热水器冰箱冷冻藏排插本机功率·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
  
 # ESPHome 核心配置
 esphome:
@@ -98,7 +98,7 @@ font:
       - "\U000F050F"  # 温度计
       - "\U000F058E"  # 湿度
       - "\U000F0290"  # 冰箱
-      - "\U000F0F92"  # 热水器
+      - "\U000F02E3"  # 卧室
       - "\U000F140B"  # 闪电
       - "\U000F1A57"  # 电量
 
@@ -159,23 +159,21 @@ display:
       // === 4. 客厅温湿度 ===
       if (!isnan(id(xiaomi_temp).state) && !isnan(id(xiaomi_humi).state)) {
         it.print(30, y_offset, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC"); // 小房子
-        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "客厅：%.1f℃ / %.0f%%", id(xiaomi_temp).state, id(xiaomi_humi).state);
+        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "客厅：温度 %.1f℃ / 湿度 %.0f%%", id(xiaomi_temp).state, id(xiaomi_humi).state);
         y_offset += line_height;
       }
 
-      // === 5. 冰箱温度（冷藏 + 冷冻）===
+      // === 5. 卧室温湿度 ===
+      if (!isnan(id(qp_temp).state) && !isnan(id(qp_humi).state)) {
+        it.print(30, y_offset, id(icons_font), TextAlign::TOP_LEFT, "\U000F02E3"); // 卧室
+        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "卧室：温度 %.1f℃ / 湿度 %.0f%%", id(xiaomi_temp).state, id(xiaomi_humi).state);
+        y_offset += line_height;
+      }
+
+      // === 6. 冰箱温度（冷藏 + 冷冻）===
       if (!isnan(id(icebox_temp01).state) && !isnan(id(icebox_temp02).state)) {
         it.print(30, y_offset, id(icons_font), TextAlign::TOP_LEFT, "\U000F0290"); // 冰箱
         it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "冰箱：冷藏 %.1f℃ / 冷冻 %.1f℃", id(icebox_temp01).state, id(icebox_temp02).state);
-        y_offset += line_height;
-      }
-
-      // === 6. 热水器温度 ===
-      // 注意：water_heater.* 实体通常不直接提供数值！
-      // 如果显示 nan，请改用对应的 sensor.* 实体 ID
-      if (!isnan(id(water_heater_temp).state)) {
-        it.print(30, y_offset, id(icons_font), TextAlign::TOP_LEFT, "\U000F0F92"); // 热水器
-        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "热水器：%.1f℃", id(water_heater_temp).state);
         y_offset += line_height;
       }
 
@@ -186,24 +184,26 @@ display:
         it.print(30, y_offset, id(icons_font), TextAlign::TOP_LEFT, "\U000F140B"); // 闪电（代表电力）
         char buf[100] = "排插：";
         if (has_power) {
-          sprintf(buf + strlen(buf), "%.0fW", id(cmpower_power).state);
+          sprintf(buf + strlen(buf), "功率 %.0fW", id(cmpower_power).state);
         } else {
           strcat(buf, "--W");
         }
         if (has_energy) {
-          sprintf(buf + strlen(buf), " / 总电量：%.0fWh", id(total_power).state);
+          sprintf(buf + strlen(buf), " / 总电量 %.0fWh", id(total_power).state);
         }
         it.print(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, buf);
         y_offset += line_height;
       }
 
+      it.print(30, 400, id(icons_gfont), TextAlign::TOP_LEFT, "\U0000e425"); // 测试
+
       // === 8. 本机温湿度（固定在底部）===
       if (!isnan(id(m5paper_temperature).state) && !isnan(id(m5paper_humidity).state)) {
         it.print(30, 480, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F"); // 温度计
-        it.printf(80, 480, id(cn_font), TextAlign::TOP_LEFT, "本机：%.1f℃ / %.0f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
+        it.printf(80, 480, id(cn_font), TextAlign::TOP_LEFT, "本机：湿度 %.1f℃ / 湿度 %.0f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
       }
-
-      // 可选：边框
+          
+      // 边框
       it.rectangle(10, 10, it.get_width() - 20, it.get_height() - 20);
 
 # 触摸屏：GT911 电容触摸芯片
@@ -311,12 +311,16 @@ sensor:
     id: xiaomi_humi
     entity_id: sensor.cleargras_cn_blt_3_u5c2qgggk400_dk1_relative_humidity_p_2_2
 
-  # 热水器温度
+  # 青萍温湿度计
   - platform: homeassistant
-    name: water_heater temperature
-    entity_id: water_heater.viomi_cn_273765712_e4_s_2_water_heater
-    id: water_heater_temp
+    name: qingping temperature
+    entity_id: sensor.cgllc_cn_blt_3_1mitqg1roc800_dove_temperature_p_2_1
+    id: qp_temp
     unit_of_measurement: "°C"
+  - platform: homeassistant
+    name: qingping humidity
+    id: qp_humi
+    entity_id: sensor.cgllc_cn_blt_3_1mitqg1roc800_dove_relative_humidity_p_2_2
 
   # 冰箱温度
   - platform: homeassistant
