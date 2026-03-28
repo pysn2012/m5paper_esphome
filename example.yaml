@@ -5,7 +5,7 @@ substitutions:
 
   # 允许显示的字符集
   allowed_characters: |-
-    一二三四五六七八九十百千万亿星期温度湿时间日分秒你好世界我他和开心快乐总电量客厅热水器冰箱冷冻藏排插本机功率·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
+    一二三四五六七八九十百千万亿星期温度湿时间日分秒你好世界我他和开心快乐总电量客厅卧室热水器冰箱冷冻藏排插本机功率·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
  
 # ESPHome 核心配置
 esphome:
@@ -340,6 +340,8 @@ sensor:
     entity_id: sensor.cmpower_w1_270cee_24_gong_lu
     id: cmpower_power
     unit_of_measurement: "W"
+    filters:
+      - throttle: 60s
   - platform: homeassistant
     name: total power
     entity_id: sensor.cmpower_w1_270cee_29_zong_dian_liang
