@@ -214,18 +214,18 @@ display:
 
 ### Display Lambda API
 
-Standard ESPHome display lambda functions are supported:
+标准 ESPHome 显示屏 Lambda 函数均支持：
 
-- `it.fill(color)` - Fill display with color
-- `it.print(x, y, font, align, "text")` - Print text
-- `it.printf(x, y, font, align, format, ...)` - Print formatted text
-- `it.rectangle(x, y, w, h)` - Draw rectangle outline
-- `it.filled_rectangle(x, y, w, h)` - Draw filled rectangle
-- `it.circle(x, y, radius)` - Draw circle outline
-- `it.filled_circle(x, y, radius)` - Draw filled circle
-- `it.line(x1, y1, x2, y2)` - Draw line
-- `it.get_width()` - Get display width
-- `it.get_height()` - Get display height
+- `it.fill(color)` - 用指定颜色填充整个屏幕
+- `it.print(x, y, font, align, "text")` - 打印文字
+- `it.printf(x, y, font, align, format, ...)` - 打印格式化文本（支持变量）
+- `it.rectangle(x, y, w, h)` - 绘制空心矩形
+- `it.filled_rectangle(x, y, w, h)` - 绘制实心矩形
+- `it.circle(x, y, radius)` - 绘制空心圆形
+- `it.filled_circle(x, y, radius)` - 绘制实心圆形
+- `it.line(x1, y1, x2, y2)` - 绘制直线
+- `it.get_width()` - 获取屏幕宽度
+- `it.get_height()` - 获取屏幕高度
 
 ### Component Methods
 

@@ -5,7 +5,7 @@ substitutions:
 
   # 允许显示的字符集
   allowed_characters: |-
-    一二三四五六七八九十百千万亿温度湿时间分秒你好世界我他和开心快乐电量客厅·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
+    一二三四五六七八九十百千万亿温度湿时间分秒你好世界我他和开心快乐总电量客厅热水器冰箱冷冻藏排插·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
  
 # ESPHome 核心配置
 esphome:
@@ -126,9 +126,6 @@ display:
     update_interval: never        # 不自动刷新，仅手动更新
     # 在屏幕上绘制内容
     lambda: |-
-      // 背景清白（可选，IT8951 默认白色）
-      it.fill(COLOR_WHITE);
-
       // === 1. 顶部时间（大字居中）===
       it.strftime(it.get_width() / 2, 20, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M", id(rtc_time).now());
 
