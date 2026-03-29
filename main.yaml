@@ -23,9 +23,18 @@ esphome:
       then:
         - wait_until: wifi.connected     # 等待 WiFi 连接成功
         - wait_until: api.connected      # 等待 Home Assistant API 连接成功
-        - delay: 8s                      # 额外等待 3 秒确保传感器数据同步
+        - delay: 2s                      # 额外等待 3 秒
+        # 👇 手动触发所有本地传感器更新
+        - sensor.update: m5paper_battery_voltage
+        - sensor.update: m5paper_temperature
+        - sensor.update: m5paper_humidity
+        - delay: 2s
+        - lambda: |-
+            // 强制重新计算电池百分比
+            id(m5paper_battery_level).update();
+        - delay: 500ms
         - component.update: m5paper_display
-        - delay: 5s                      # 留出屏幕刷新完成时间
+        - delay: 3s                      # 留出屏幕刷新完成时间
         - deep_sleep.enter: deep_sleep_10min  # ⭐ 关键：进入深度睡眠
 
 esp32:
@@ -243,7 +252,7 @@ sensor:
     pin: GPIO35                                  # ADC 引脚
     name: ${device_name} battery voltage
     id: m5paper_battery_voltage
-    update_interval: 60s
+    # update_interval: 60s
     attenuation: 12db                            # 使用 12dB 衰减（支持最高 ~3.9V 输入）
     filters:
       - multiply: 2                              # 分压电阻比为 1:1，所以乘以 2 得到真实电压
@@ -263,7 +272,7 @@ sensor:
       state_class: "measurement"
       icon: mdi:water-percent
     address: 0x44
-    update_interval: 60s
+    # update_interval: 60s
   
   # 电池电量百分比（基于电压计算）
   - platform: template
@@ -273,7 +282,7 @@ sensor:
     device_class: "battery"
     state_class: "measurement"
     icon: mdi:battery-high
-    update_interval: 60s
+    # update_interval: 60s
     lambda: |-
       constexpr float min_level = 3.52;   // 电池空载截止电压（约 0%）
       constexpr float max_level = 4.15;   // 电池满电电压（约 100%）
