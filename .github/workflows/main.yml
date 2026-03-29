@@ -35,7 +35,7 @@ jobs:
 
       # 步骤4：编译m5paper_esphome固件
       - name: 编译固件
-        run: esphome compile example.yaml
+        run: esphome compile main.yaml
 
       # 步骤5：动态查找编译产物
       - name: 动态查找 firmware.bin
@@ -64,5 +64,5 @@ jobs:
             ${{ steps.find_fw.outputs.FIRMWARE }}
             ${{ steps.find_fw.outputs.OTA }}
             ${{ steps.find_fw.outputs.FACTORY }}
-            example.yaml
+            main.yaml
           retention-days: 30
