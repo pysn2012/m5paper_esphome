@@ -23,10 +23,7 @@ esphome:
       then:
         - wait_until: wifi.connected     # 等待 WiFi 连接成功
         - wait_until: api.connected      # 等待 Home Assistant API 连接成功
-        - delay: 3s                      # 额外等待 3 秒确保传感器数据同步
-        - it8951e.clear:
-            id: m5paper_display
-        - delay: 100ms
+        - delay: 8s                      # 额外等待 3 秒确保传感器数据同步
         - component.update: m5paper_display
         - delay: 5s                      # 留出屏幕刷新完成时间
         - deep_sleep.enter: deep_sleep_10min  # ⭐ 关键：进入深度睡眠
@@ -343,13 +340,10 @@ sensor:
     entity_id: sensor.cmpower_w1_270cee_24_gong_lu
     id: cmpower_power
     unit_of_measurement: "W"
-    filters:
-      - throttle: 60s
   - platform: homeassistant
     name: total power
     entity_id: sensor.cmpower_w1_270cee_29_zong_dian_liang
     id: total_power
     unit_of_measurement: "Wh"
-    filters:
-      - throttle: 60s
+
 
