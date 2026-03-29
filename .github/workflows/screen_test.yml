@@ -25,7 +25,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install esphome
 
-      # 关键步骤：动态生成 secrets.yaml
+      # 步骤4：动态生成 secrets.yaml
       - name: Generate secrets.yaml
         run: |
           cat > secrets.yaml <<EOF
@@ -33,11 +33,11 @@ jobs:
           wifi_password: "${{ secrets.WIFI_PASSWORD }}"
           EOF
 
-      # 步骤4：编译m5paper_esphome固件
+      # 步骤5：编译m5paper_esphome固件
       - name: 编译固件
         run: esphome compile screen_test.yaml
 
-      # 步骤5：动态查找编译产物
+      # 步骤6：动态查找编译产物
       - name: 动态查找 firmware.bin
         id: find_fw
         run: |
@@ -55,7 +55,7 @@ jobs:
           echo "OTA=$OTA" >> $GITHUB_OUTPUT
           echo "FACTORY=$FACTORY" >> $GITHUB_OUTPUT
 
-      # 步骤6：上传固件
+      # 步骤7：上传固件
       - name: 上传固件到 Artifacts
         uses: actions/upload-artifact@v4
         with:
