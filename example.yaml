@@ -19,12 +19,17 @@ esphome:
         - bm8563.read_time:
             id: rtc_time              # 从 RTC 读取当前时间
 
-    - priority: -100                  # 低优先级
+    - priority: -100
       then:
+        - wait_until: wifi.connected     # 等待 WiFi 连接成功
+        - wait_until: api.connected      # 等待 Home Assistant API 连接成功
+        - delay: 3s                      # 额外等待 3 秒确保传感器数据同步
         - it8951e.clear:
-            id: m5paper_display       # 清屏
-        - delay: 100ms                # 等待 100 毫秒确保清屏完成
-        - component.update: m5paper_display  # 手动触发屏幕刷新
+            id: m5paper_display
+        - delay: 100ms
+        - component.update: m5paper_display
+        - delay: 5s                      # 留出屏幕刷新完成时间
+        - deep_sleep.enter: deep_sleep_5min  # ⭐ 关键：进入深度睡眠
 
 esp32:
   board: m5stack_paper
@@ -54,7 +59,7 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  power_save_mode: "HIGH"           # 深度节能（功耗低，稳定性差）
+  # power_save_mode: "HIGH"           # 深度节能（功耗低，稳定性差）
 
 # 字体配置
 font:
@@ -211,10 +216,6 @@ touchscreen:
   - platform: gt911
     display: m5paper_display      # 关联到显示屏
     id: gt911_touchscreen         # 触摸屏 ID
-    interrupt_pin:
-      number: GPIO36
-      mode: INPUT                 # 显式指定为输入模式
-      inverted: false             # GT911中断低电平有效
     transform:
       swap_xy: true
       mirror_x: false
@@ -233,6 +234,12 @@ switch:
     id: restart_switch
     name: ${device_name} Restart
 
+# 深度睡眠配置（基于 BM8563 RTC 定时唤醒）
+deep_sleep:
+  id: deep_sleep_10min
+  run_duration: 40s      # 唤醒后最多运行 40 秒（足够完成联网+刷新）
+  sleep_duration: 10min   # 睡眠 10 分钟
+
 # 时间同步配置
 time:
   - platform: homeassistant       # 从 Home Assistant 获取网络时间
@@ -242,10 +249,6 @@ time:
       - bm8563.write_time         # 时间同步成功后，写入 RTC （BM8563）
   - platform: bm8563              # 使用 BM8563 实时时钟（I2C 接口）
     id: rtc_time
-    on_time:
-      - seconds: 0                # 每整分钟（秒=0）触发
-        then:
-          - component.update: m5paper_display   # 刷新屏幕显示新时间
 
 # M5Paper 电源管理（控制主电/电池切换）
 m5paper:
@@ -340,11 +343,13 @@ sensor:
     entity_id: sensor.cmpower_w1_270cee_24_gong_lu
     id: cmpower_power
     unit_of_measurement: "W"
-    update_interval: 60s
+    filters:
+      - throttle: 60s
   - platform: homeassistant
     name: total power
     entity_id: sensor.cmpower_w1_270cee_29_zong_dian_liang
     id: total_power
     unit_of_measurement: "Wh"
-    update_interval: 60s
+    filters:
+      - throttle: 60s
 
