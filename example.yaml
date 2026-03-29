@@ -29,7 +29,7 @@ esphome:
         - delay: 100ms
         - component.update: m5paper_display
         - delay: 5s                      # 留出屏幕刷新完成时间
-        - deep_sleep.enter: deep_sleep_5min  # ⭐ 关键：进入深度睡眠
+        - deep_sleep.enter: deep_sleep_10min  # ⭐ 关键：进入深度睡眠
 
 esp32:
   board: m5stack_paper
