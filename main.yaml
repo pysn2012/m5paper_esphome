@@ -23,16 +23,7 @@ esphome:
       then:
         - wait_until: wifi.connected     # 等待 WiFi 连接成功
         - wait_until: api.connected      # 等待 Home Assistant API 连接成功
-        - delay: 2s                      # 额外等待 3 秒
-        # 👇 手动触发所有本地传感器更新
-        - sensor.update: m5paper_battery_voltage
-        - sensor.update: m5paper_temperature
-        - sensor.update: m5paper_humidity
-        - delay: 2s
-        - lambda: |-
-            // 强制重新计算电池百分比
-            id(m5paper_battery_level).update();
-        - delay: 500ms
+        - delay: 5s                      # 额外等待 5 秒
         - component.update: m5paper_display
         - delay: 3s                      # 留出屏幕刷新完成时间
         - deep_sleep.enter: deep_sleep_10min  # ⭐ 关键：进入深度睡眠
@@ -147,7 +138,15 @@ display:
       it.print(it.get_width() / 2, 90, id(cn_font), TextAlign::TOP_CENTER, weekdays[wd]);
 
       // === 3. 电池图标（右上角）===
-      float bat_pct = id(m5paper_battery_level).state;
+      float v_bat = id(m5paper_battery_voltage).state;
+      float bat_pct = NAN;
+      if (!isnan(v_bat)) {
+        constexpr float min_v = 3.52f;   // 0%
+        constexpr float max_v = 4.15f;   // 100%
+        bat_pct = (v_bat - min_v) / (max_v - min_v) * 100.0f;
+        bat_pct = clamp(bat_pct, 0.0f, 100.0f);
+      }
+      
       const char* bat_icon = "\U000F007A"; // 10% (最低)
       if (!isnan(bat_pct)) {
         if (bat_pct >= 95) bat_icon = "\U000F0079"; // 满电
@@ -211,7 +210,7 @@ display:
       // === 8. 本机温湿度（固定在底部）===
       if (!isnan(id(m5paper_temperature).state) && !isnan(id(m5paper_humidity).state)) {
         it.print(30, 480, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F"); // 温度计
-        it.printf(80, 480, id(cn_font), TextAlign::TOP_LEFT, "本机：湿度 %.1f℃ / 湿度 %.0f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
+        it.printf(80, 480, id(cn_font), TextAlign::TOP_LEFT, "本机：温度 %.1f℃ / 湿度 %.0f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
       }
           
       // 边框
@@ -273,24 +272,6 @@ sensor:
       icon: mdi:water-percent
     address: 0x44
     # update_interval: 60s
-  
-  # 电池电量百分比（基于电压计算）
-  - platform: template
-    name: ${device_name} battery level
-    id: m5paper_battery_level
-    unit_of_measurement: '%'
-    device_class: "battery"
-    state_class: "measurement"
-    icon: mdi:battery-high
-    # update_interval: 60s
-    lambda: |-
-      constexpr float min_level = 3.52;   // 电池空载截止电压（约 0%）
-      constexpr float max_level = 4.15;   // 电池满电电压（约 100%）
-      return ((id(m5paper_battery_voltage).state - min_level) / (max_level - min_level)) * 100.00;
-    filters:
-      - clamp:
-          min_value: 0
-          max_value: 100
 
   # 小米温湿度计
   - platform: homeassistant
