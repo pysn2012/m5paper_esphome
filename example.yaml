@@ -161,14 +161,14 @@ display:
       // === 4. 客厅温湿度 ===
       if (!isnan(id(xiaomi_temp).state) && !isnan(id(xiaomi_humi).state)) {
         it.print(30, y_offset, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC"); // 小房子
-        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "客厅：温度 %.1f℃ / 湿度 %.0f%%", id(xiaomi_temp).state, id(xiaomi_humi).state);
+        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "客厅：温度 %.1f℃ / 湿度 %.1f%%", id(xiaomi_temp).state, id(xiaomi_humi).state);
         y_offset += line_height;
       }
 
       // === 5. 卧室温湿度 ===
       if (!isnan(id(qp_temp).state) && !isnan(id(qp_humi).state)) {
         it.print(30, y_offset, id(icons_font), TextAlign::TOP_LEFT, "\U000F02E3"); // 卧室
-        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "卧室：温度 %.1f℃ / 湿度 %.0f%%", id(xiaomi_temp).state, id(xiaomi_humi).state);
+        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "卧室：温度 %.1f℃ / 湿度 %.1f%%", id(xiaomi_temp).state, id(xiaomi_humi).state);
         y_offset += line_height;
       }
 
@@ -186,12 +186,12 @@ display:
         it.print(30, y_offset, id(icons_font), TextAlign::TOP_LEFT, "\U000F140B"); // 闪电（代表电力）
         char buf[100] = "排插：";
         if (has_power) {
-          sprintf(buf + strlen(buf), "功率 %.0fW", id(cmpower_power).state);
+          sprintf(buf + strlen(buf), "功率 %.1fW", id(cmpower_power).state);
         } else {
           strcat(buf, "--W");
         }
         if (has_energy) {
-          sprintf(buf + strlen(buf), " / 总电量 %.0fWh", id(total_power).state);
+          sprintf(buf + strlen(buf), " / 总电量 %.1fkWh", id(total_power).state / 1000.0f);
         }
         it.print(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, buf);
         y_offset += line_height;
@@ -207,23 +207,6 @@ display:
           
       // 边框
       it.rectangle(10, 10, it.get_width() - 20, it.get_height() - 20);
-
-# 触摸屏：GT911 电容触摸芯片
-touchscreen:
-  - platform: gt911
-    display: m5paper_display      # 关联到显示屏
-    id: gt911_touchscreen         # 触摸屏 ID
-    transform:
-      swap_xy: true
-      mirror_x: false
-      mirror_y: true
-    on_touch:
-      then:
-        # 触摸测试
-        - lambda: |-
-            ESP_LOGI("touch", "Touch: x=%d, y=%d, id=%d, %s",
-                     touch.x, touch.y, touch.id,
-                     touch.state ? "DOWN" : "UP");
 
 # 重启开关
 switch:

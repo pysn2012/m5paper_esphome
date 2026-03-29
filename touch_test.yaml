@@ -21,10 +21,10 @@ esphome:
 
     - priority: -100                  # 低优先级
       then:
-        - it8951e.clear:
-            id: m5paper_display       # 清屏
-        - delay: 100ms                # 等待 100 毫秒确保清屏完成
-        - component.update: m5paper_display  # 手动触发屏幕刷新
+        - wait_until: wifi.connected     # 等待 WiFi 连接成功
+        - wait_until: api.connected      # 等待 Home Assistant API 连接成功
+        - delay: 8s                      # 额外等待 3 秒确保传感器数据同步
+        - component.update: m5paper_display
 
 esp32:
   board: m5stack_paper
@@ -121,10 +121,6 @@ touchscreen:
   - platform: gt911
     display: m5paper_display      # 关联到显示屏
     id: gt911_touchscreen         # 触摸屏 ID
-    interrupt_pin:
-      number: GPIO36
-      mode: INPUT                 # 显式指定为输入模式
-      inverted: false             # GT911中断低电平有效
     transform:
       swap_xy: true
       mirror_x: false
@@ -136,12 +132,6 @@ touchscreen:
             ESP_LOGI("touch", "Touch: x=%d, y=%d, id=%d, %s",
                      touch.x, touch.y, touch.id,
                      touch.state ? "DOWN" : "UP");
-
-# 重启开关
-switch:
-  - platform: restart
-    id: restart_switch
-    name: ${device_name} Restart
 
 # 时间同步配置
 time:
