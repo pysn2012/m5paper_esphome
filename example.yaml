@@ -340,11 +340,11 @@ sensor:
     entity_id: sensor.cmpower_w1_270cee_24_gong_lu
     id: cmpower_power
     unit_of_measurement: "W"
-    filters:
-      - throttle: 60s
+    update_interval: 60s
   - platform: homeassistant
     name: total power
     entity_id: sensor.cmpower_w1_270cee_29_zong_dian_liang
     id: total_power
     unit_of_measurement: "Wh"
+    update_interval: 60s
 
