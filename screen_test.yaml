@@ -27,20 +27,20 @@ esp32:
   framework:
     type: esp-idf
     advanced:
-      minimum_chip_revision: '3.1'    # 对应 ESP32-D0WD-V3
+      minimum_chip_revision: '3.1'    # 对应 ESP32-V3
 
 # 外部自定义组件（本地路径）
 external_components:
   - source:
       type: local
-      path: components/           # 自定义组件目录（相对于本 YAML 文件）
+      path: components/           # 自定义组件目录
 
 # 系统服务：日志、PSRAM、API、OTA
-logger:                           # 启用串口日志输出（用于调试）
+logger:                           # 启用串口日志输出
 
-psram:                            # 启用 PSRAM（M5Paper 有外置 PSRAM，必须开启）
+psram:                            # 启用 PSRAM
 
-api:                              # 启用 Home Assistant API（支持远程控制和状态同步）
+api:                              # 启用 Home Assistant API
 
 ota:
   - platform: esphome

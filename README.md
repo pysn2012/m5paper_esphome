@@ -4,81 +4,86 @@
 
 ## 硬件参数
 
-| 规格项 | Value |
-|--------------|-------|
-| 产品型号 | M5Stack Paper V1.1 |
-| SKU | K049-B |
-| Display | 4.7" E-Ink (ED047TC1) |
-| Resolution | 540 x 960 pixels |
-| Controller | IT8951E |
-| 灰度等级 | 16 levels (4-bit) |
-| SoC | ESP32-D0WDQ6-V3 |
-| Flash | 16MB |
-| PSRAM | 8MB |
+|            规格项             |              数值              |
+| :---------------------------: | :----------------------------: |
+|           产品型号            |       M5Stack Paper V1.1       |
+|              SKU              |             K049-B             |
+|            显示屏             | 4.7 英寸 电子墨水屏 (ED047TC1) |
+|            分辨率             |         540 x 960 像素         |
+|            控制器             |            IT8951E             |
+|           灰度等级            |          16 级 (4 位)          |
+|        系统芯片（SoC）        |        ESP32-D0WDQ6-V3         |
+|             闪存              |              16MB              |
+| 伪静态随机存取存储器（PSRAM） |              8MB               |
 
 ## 引脚映射 (M5Stack Paper V1.1)
 
-| Signal | GPIO | Description |
-|--------|------|-------------|
-| MOSI | GPIO12 | SPI Data Out |
-| MISO | GPIO13 | SPI Data In |
-| SCK | GPIO14 | SPI Clock |
-| CS | GPIO15 | Chip Select |
-| BUSY | GPIO27 | IT8951E Busy |
-| RST | GPIO4 | Reset (optional) |
+| 信号 | 通用输入输出引脚（GPIO） |            描述             |
+| :--: | :----------------------: | :-------------------------: |
+| MOSI |          GPIO12          | 串行外设接口（SPI）数据输出 |
+| MISO |          GPIO13          | 串行外设接口（SPI）数据输入 |
+| SCK  |          GPIO14          |   串行外设接口（SPI）时钟   |
+|  CS  |          GPIO15          |            片选             |
+| BUSY |          GPIO27          |       IT8951E 忙状态        |
+| RST  |          GPIO4           |        复位（可选）         |
 
 ## 功能特性
 
-- **16-level grayscale** (4-bit per pixel)
-- **Multiple refresh modes** for quality/speed tradeoff
-- **Rotation support** (0, 90, 180, 270 degrees)
-- **Deep sleep** power saving
-- **Frame buffer** for efficient updates
+- **16 级灰度**（每像素 4 位）
+- **多种刷新模式**，可在显示质量和刷新速度间权衡
+- **支持旋转**（0°、90°、180°、270°）
+- **深度睡眠** 省电模式
+- **帧缓冲区** 实现高效更新
 
 ## 刷新模式
 
-| Mode | Time | Quality | Use Case |
-|------|------|---------|----------|
-| INIT (0) | 2000ms | Full erase | Initialization |
-| DU (1) | 260ms | Fast mono | Touch response |
-| GC16 (2) | 450ms | High quality | Images |
-| GL16 (3) | 450ms | Text optimized | Text display |
-| GLR16 (4) | 450ms | Reduced ghosting | Mixed content |
-| GLD16 (5) | 450ms | Light refresh | Frequent updates |
-| DU4 (6) | 120ms | 4-level gray | Fast updates |
-| A2 (7) | 290ms | Anti-aliased | Animations |
+|   模式    |   耗时    | 显示质量 |   使用场景   |
+| :-------: | :-------: | :------: | :----------: |
+| INIT (0)  | 2000 毫秒 | 全屏擦除 |    初始化    |
+|  DU (1)   | 260 毫秒  | 快速单色 |   触摸响应   |
+| GC16 (2)  | 450 毫秒  |  高质量  |   图片显示   |
+| GL16 (3)  | 450 毫秒  | 文字优化 |   文本显示   |
+| GLR16 (4) | 450 毫秒  | 减少残影 | 混合内容显示 |
+| GLD16 (5) | 450 毫秒  | 轻量刷新 |  高频次更新  |
+|  DU4 (6)  | 120 毫秒  | 4 级灰度 |   快速更新   |
+|  A2 (7)   | 290 毫秒  |  抗锯齿  |   动画效果   |
 
-## Installation
+## 安装方法
 
-### Option 1: Local Path
+推荐使用 GitHub Actions workflows 进行云端编译，高效且稳定。
 
-Copy the component folder to your ESPHome configuration directory:
+① 启用工作流：进入仓库页面，点击上方「Actions」选项卡，启用工作流功能；
 
-```yaml
-external_components:
-  - source:
-      path: ./m5paper_display/esphome
-    components: [m5paper_display]
-```
+② 编写workflows配置文件；
 
-### Option 2: Git Repository
+③ 配置 WIFI 加密参数：进入仓库「Settings > Actions」，添加两个仓库密钥（WIFI_SSID、WIFI_PASSWORD），编译时将自动注入 WIFI 信息；
 
-```yaml
-external_components:
-  - source:
-      url: https://github.com/your-repo/m5paper-esphome
-      ref: main
-    components: [m5paper_display]
-```
+④ 触发编译：选择「Build」工作流，点击「Run workflow」手动触发编译；
 
-## Configuration
+⑤ 下载固件：编译完成后，在工作流运行结果的「Artifacts」板块，下载生成的固件压缩包。
+
+## 烧录固件
+
+测试阶段推荐使用ESPConnect在线工具烧录，支持查看串口日志，便于调试：
+
+① 用 USB 数据线将 M5Paper 开发板连接至电脑；
+
+② 访问ESPConnect在线工具：https://thelastoutpostworkshop.github.io/ESPConnect/
+
+③ 点击「连接」，在设备列表中选择对应的设备；
+
+④ 左侧选择「闪存工具」，上传编译好的固件，勾选「写入前擦除整个闪存」；
+
+⑤ 点击「烧录固件」，等待烧录完成。
+
+## 配置说明
 
 ```yaml
 display:
   - platform: m5paper_display
     id: m5paper_screen
 
-    # SPI Configuration
+    # SPI 配置
     cs_pin: GPIO15
     busy_pin: GPIO27
     reset_pin: GPIO4
@@ -88,25 +93,25 @@ display:
     spi_host: vspi
     spi_frequency: 10MHz
 
-    # Display Configuration
-    rotation: 0              # 0, 90, 180, 270
-    update_mode: GC16          # See refresh modes table
+    # 显示屏配置
+    rotation: 0              # 可选值：0、90、180、270
+    update_mode: GC16          # 参考刷新模式表格
     inverted: false
     clear_on_startup: true
     deep_sleep_enabled: false
 
-    # Update Interval
+    # 更新间隔
     update_interval: 10s
 
-    # Display Content (lambda)
+    # 显示内容（Lambda 表达式）
     lambda: |-
       it.fill(COLOR_OFF);
-      it.print(0, 0, id(my_font), "Hello M5Paper!");
+      it.print(0, 0, id(my_font), "你好 M5Paper!");
 ```
 
-## Usage Examples
+## 使用示例
 
-### Basic Display
+### 基础显示
 
 ```yaml
 display:
@@ -117,7 +122,7 @@ display:
       it.print(0, 0, id(my_font), "Hello World!");
 ```
 
-### Weather Display
+### 天气显示
 
 ```yaml
 display:
@@ -125,26 +130,26 @@ display:
     id: weather_display
     update_interval: 5min
     lambda: |-
-      // Background
+      // 背景填充
       it.fill(COLOR_OFF);
 
-      // City name
+      // 城市名称
       it.print(0, 20, id(title_font), TextAlign::TOP_CENTER,
-               "Beijing");
+               "北京");
 
-      // Temperature
+      // 温度
       it.printf(0, 100, id(temp_font), TextAlign::TOP_CENTER,
                 "%.1f°C", id(outdoor_temp).state);
 
-      // Weather icon (custom implementation needed)
+      // 天气图标（需自定义实现）
       // draw_weather_icon(it, id(weather_icon), 0, 200);
 
-      // Humidity
+      // 湿度
       it.printf(0, 400, id(body_font), TextAlign::TOP_CENTER,
-                "Humidity: %.0f%%", id(humidity).state);
+                "湿度: %.0f%%", id(humidity).state);
 ```
 
-### Clock Display
+### 时钟显示
 
 ```yaml
 display:
@@ -154,16 +159,16 @@ display:
     lambda: |-
       it.fill(COLOR_OFF);
 
-      // Time
+      // 时间
       it.strftime(0, 100, id(clock_font), TextAlign::TOP_CENTER,
                    "%H:%M", id(sntp_time).now());
 
-      // Date
+      // 日期
       it.strftime(0, 300, id(date_font), TextAlign::TOP_CENTER,
                    "%Y-%m-%d", id(sntp_time).now());
 ```
 
-### Sensor Dashboard
+### 传感器仪表盘
 
 ```yaml
 display:
@@ -178,41 +183,41 @@ display:
 
       it.fill(COLOR_OFF);
 
-      // Sensor readings
-      it.printf(x, y, id(sensor_font), "Temperature: %.1f°C",
+      // 传感器读数
+      it.printf(x, y, id(sensor_font), "温度: %.1f°C",
                  id(temp_sensor).state);
       y += spacing;
 
-      it.printf(x, y, id(sensor_font), "Humidity: %.0f%%",
+      it.printf(x, y, id(sensor_font), "湿度: %.0f%%",
                  id(humidity_sensor).state);
       y += spacing;
 
-      it.printf(x, y, id(sensor_font), "Pressure: %.0f hPa",
+      it.printf(x, y, id(sensor_font), "气压: %.0f 百帕",
                  id(pressure_sensor).state);
 ```
 
-## API Reference
+## API 参考
 
-### Configuration Options
+### 配置项
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `cs_pin` | int | 15 | Chip Select GPIO |
-| `busy_pin` | int | 27 | Busy signal GPIO |
-| `reset_pin` | int | -1 | Reset GPIO (-1 = skip) |
-| `mosi_pin` | int | 12 | MOSI GPIO |
-| `miso_pin` | int | 13 | MISO GPIO |
-| `sck_pin` | int | 14 | Clock GPIO |
-| `spi_host` | string | "vspi" | SPI host (vspi/hspi) |
-| `spi_frequency` | int | 10000000 | SPI frequency in Hz |
-| `rotation` | int | 0 | Display rotation (0-3) |
-| `update_mode` | int | 2 | Refresh mode (0-8) |
-| `inverted` | bool | false | Invert colors |
-| `clear_on_startup` | bool | true | Clear display on boot |
-| `deep_sleep_enabled` | bool | false | Enable deep sleep |
-| `update_interval` | time | 1s | Update interval |
+|        配置项        |  类型  |  默认值  |             描述              |
+| :------------------: | :----: | :------: | :---------------------------: |
+|       `cs_pin`       |  整数  |    15    |        片选 GPIO 引脚         |
+|      `busy_pin`      |  整数  |    27    |     忙状态信号 GPIO 引脚      |
+|     `reset_pin`      |  整数  |    -1    | 复位 GPIO 引脚（-1 表示跳过） |
+|      `mosi_pin`      |  整数  |    12    |        MOSI GPIO 引脚         |
+|      `miso_pin`      |  整数  |    13    |        MISO GPIO 引脚         |
+|      `sck_pin`       |  整数  |    14    |        时钟 GPIO 引脚         |
+|      `spi_host`      | 字符串 |  "vspi"  |     SPI 主机（vspi/hspi）     |
+|   `spi_frequency`    |  整数  | 10000000 |    SPI 频率（单位：赫兹）     |
+|      `rotation`      |  整数  |    0     |     显示屏旋转角度（0-3）     |
+|    `update_mode`     |  整数  |    2     |        刷新模式（0-8）        |
+|      `inverted`      | 布尔值 |  false   |           颜色反转            |
+|  `clear_on_startup`  | 布尔值 |   true   |       启动时清空显示屏        |
+| `deep_sleep_enabled` | 布尔值 |  false   |         启用深度睡眠          |
+|  `update_interval`   |  时间  |   1 秒   |           更新间隔            |
 
-### Display Lambda API
+### 显示屏 Lambda 接口
 
 标准 ESPHome 显示屏 Lambda 函数均支持：
 
@@ -227,58 +232,49 @@ display:
 - `it.get_width()` - 获取屏幕宽度
 - `it.get_height()` - 获取屏幕高度
 
-### Component Methods
+### 组件方法
 
-```cpp
-// Get the underlying IT8951 driver
+```c++
+// 获取底层 IT8951 驱动
 IT8951Driver& driver = display.get_driver();
 
-// Force a display update
+// 强制更新显示屏
 display.update_display();
 
-// Clear the display buffer
+// 清空显示缓冲区
 display.clear_display();
 
-// Enter deep sleep mode
+// 进入深度睡眠模式
 display.deep_sleep();
 
-// Wake from deep sleep
+// 从睡眠中唤醒
 display.wake_from_sleep();
 
-// Get update count
+// 获取更新次数
 uint32_t count = display.get_update_count();
 ```
 
-## Troubleshooting
+## 故障排除
 
-### Display shows garbage or wrong colors
+### 显示屏显示乱码或颜色错误
 
-1. Check SPI pin connections
-2. Verify CS, MOSI, MISO, SCK are correct
-3. Try lowering SPI frequency: `spi_frequency: 5MHz`
+1. 检查 SPI 引脚连接
+2. 确认 CS、MOSI、MISO、SCK 引脚配置正确
+3. 尝试降低 SPI 频率：`spi_frequency: 5MHz`
 
-### Ghosting / Image retention
+### 残影 / 图像残留
 
-1. Use GC16 mode for full refresh
-2. Increase `update_interval`
-3. Run full refresh periodically
+1. 使用 GC16 模式进行全屏刷新
+2. 增大 `update_interval` 数值
+3. 定期执行全屏刷新
 
-### Display not updating
+### 显示屏不更新
 
-1. Check BUSY pin connection
-2. Ensure `update_interval` is not too short
-3. Check ESPHome logs for errors
+1. 检查 BUSY 引脚连接
+2. 确保 `update_interval` 数值不设置过短
+3. 查看 ESPHome 日志排查错误
 
-### Slow refresh
+### 刷新速度慢
 
-1. Use DU, A2, or DU4 mode for faster updates
-2. These modes have lower quality but faster speed
-
-## License
-
-MIT License
-
-## Credits
-
-- IT8951E driver based on [M5Stack M5EPD](https://github.com/m5stack/M5EPD)
-- ESPHome integration inspired by [ESPHome display components](https://esphome.io/components/display/)
+1. 使用 DU、A2 或 DU4 模式实现更快更新
+2. 这些模式显示质量较低，但刷新速度更快
