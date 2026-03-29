@@ -101,20 +101,33 @@ display:
     update_interval: never        # 不自动刷新，仅手动更新
     # 在屏幕上绘制内容
     lambda: |-
-      // 1. 屏幕边缘画边框
+      // 边框
       it.rectangle(10, 10, it.get_width() - 20, it.get_height() - 20);
-      
-      // 2. 右上角显示电池电量（带 % 符号）
+
+      // 电池电量
       it.printf(it.get_width() - 20, 16, id(cn_font), TextAlign::TOP_RIGHT, "电量：%.0f%%", id(m5paper_battery_level).state);
 
-      // 3. 标题：顶部居中 —— 你好M5Paper
+      // 标题
       it.print(it.get_width()/2, 50, id(cn_font), TextAlign::TOP_CENTER, "你好M5Paper");
 
-      // 4. 标题下方居中：完整时间（年月日 时分 星期）
+      // 时间
       it.strftime(it.get_width()/2, 150, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M %A", id(rtc_time).now());
 
-      // 5. 时间下方居中：温度 湿度
-      it.printf(it.get_width()/2, 300, id(cn_font), TextAlign::TOP_CENTER, "温度：%.1f℃    湿度：%.1f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
+      // 温湿度
+      it.printf(it.get_width()/2, 300, id(cn_font), TextAlign::TOP_CENTER, "温度：%.1f℃    湿度：%.1f%%", 
+                id(m5paper_temperature).state, id(m5paper_humidity).state);
+
+      // 按钮 A
+      int btn_a_x = 100, btn_a_y = 400, btn_w = 200, btn_h = 60;
+      it.filled_rectangle(btn_a_x, btn_a_y, btn_w, btn_h);
+      it.rectangle(btn_a_x, btn_a_y, btn_w, btn_h); // 边框
+      it.print(btn_a_x + btn_w/2, btn_a_y + btn_h/2, id(cn_font), TextAlign::CENTER, "按钮 A");
+
+      // 按钮 B
+      int btn_b_x = it.get_width() - 100 - btn_w, btn_b_y = 400;
+      it.filled_rectangle(btn_b_x, btn_b_y, btn_w, btn_h);
+      it.rectangle(btn_b_x, btn_b_y, btn_w, btn_h);
+      it.print(btn_b_x + btn_w/2, btn_b_y + btn_h/2, id(cn_font), TextAlign::CENTER, "按钮 B");
 
 # 触摸屏：GT911 电容触摸芯片
 touchscreen:
@@ -129,9 +142,54 @@ touchscreen:
       then:
         # 触摸测试
         - lambda: |-
-            ESP_LOGI("touch", "Touch: x=%d, y=%d, id=%d, %s",
-                     touch.x, touch.y, touch.id,
-                     touch.state ? "DOWN" : "UP");
+            static bool a_pressed = false;
+            static bool b_pressed = false;
+
+            int touch_x = touch.x;
+            int touch_y = touch.y;
+
+            // 按钮区域定义（与 lambda 中一致）
+            const int btn_w = 200, btn_h = 60;
+            const int btn_a_x = 100, btn_a_y = 400;
+            const int btn_b_x = id(m5paper_display).get_width() - 100 - btn_w;
+            const int btn_b_y = 400;
+
+            auto draw_button_a = [&](bool pressed) {
+              id(m5paper_display).filled_rectangle(btn_a_x, btn_a_y, btn_w, btn_h, pressed ? 0x000000 : 0xFFFFFF);
+              id(m5paper_display).rectangle(btn_a_x, btn_a_y, btn_w, btn_h);
+              id(m5paper_display).print(btn_a_x + btn_w/2, btn_a_y + btn_h/2, id(cn_font), TextAlign::CENTER, "按钮 A");
+              id(m5paper_display).partial_refresh(btn_a_x - 5, btn_a_y - 5, btn_w + 10, btn_h + 10);
+            };
+
+            auto draw_button_b = [&]() {
+              // 重绘时间 + 温湿度区域（局部刷新）
+              int w = id(m5paper_display).get_width();
+              id(m5paper_display).filled_rectangle(w/2 - 200, 140, 400, 200, 0xFFFFFF); // 覆盖旧内容
+
+              id(m5paper_display).strftime(w/2, 150, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M %A", id(rtc_time).now());
+              id(m5paper_display).printf(w/2, 300, id(cn_font), TextAlign::TOP_CENTER, "温度：%.1f℃    湿度：%.1f%%", 
+                                         id(m5paper_temperature).state, id(m5paper_humidity).state);
+              id(m5paper_display).partial_refresh(w/2 - 210, 140, 420, 200);
+            };
+
+            if (touch.state) { // 按下
+              if (touch_x >= btn_a_x && touch_x <= btn_a_x + btn_w &&
+                  touch_y >= btn_a_y && touch_y <= btn_a_y + btn_h) {
+                a_pressed = true;
+                draw_button_a(true);
+              }
+              else if (touch_x >= btn_b_x && touch_x <= btn_b_x + btn_w &&
+                       touch_y >= btn_b_y && touch_y <= btn_b_y + btn_h) {
+                b_pressed = true;
+                draw_button_b();
+              }
+            } else { // 抬起
+              if (a_pressed) {
+                draw_button_a(false);
+                a_pressed = false;
+              }
+              b_pressed = false;
+            }
 
 # 时间同步配置
 time:
