@@ -56,6 +56,13 @@ wifi:
   password: !secret wifi_password
   power_save_mode: "HIGH"           # 深度节能（功耗低，稳定性差）
 
+# 全局变量
+globals:
+  - id: current_page
+    type: int
+    restore_value: no
+    initial_value: '0'
+
 # 字体配置
 font:
   - file:
@@ -73,7 +80,7 @@ font:
       weight: 400
       italic: false
     id: big_font
-    size: 72
+    size: 56
     glyphs: ${allowed_characters}
     ignore_missing_glyphs: true
 
@@ -101,33 +108,51 @@ display:
     update_interval: never        # 不自动刷新，仅手动更新
     # 在屏幕上绘制内容
     lambda: |-
-      // 边框
-      it.rectangle(10, 10, it.get_width() - 20, it.get_height() - 20);
+      const int menu_width = 180;  // 左侧菜单宽度
+      const int content_x = menu_width + 10;
+      const int content_width = it.get_width() - menu_width - 20;
 
-      // 电池电量
-      it.printf(it.get_width() - 20, 16, id(cn_font), TextAlign::TOP_RIGHT, "电量：%.0f%%", id(m5paper_battery_level).state);
+      // === 绘制边框 ===
+      it.rectangle(5, 5, it.get_width() - 10, it.get_height() - 10);
 
-      // 标题
-      it.print(it.get_width()/2, 50, id(cn_font), TextAlign::TOP_CENTER, "你好M5Paper");
+      // === 左侧菜单 ===
+      it.filled_rectangle(0, 0, menu_width, it.get_height()); // 背景色区分
+      it.print(menu_width / 2, 100, id(cn_font), TextAlign::CENTER, "欢迎");
+      it.print(menu_width / 2, 200, id(cn_font), TextAlign::CENTER, "环境");
 
-      // 时间
-      it.strftime(it.get_width()/2, 150, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M %A", id(rtc_time).now());
+      // === 右侧内容区 ===
+      int page = id(current_page);
+      if (page == 0) {
+        // ===== 页面1：欢迎 =====
+        it.print(content_x + content_width / 2, 50, id(big_font), TextAlign::TOP_CENTER, "你好，M5Paper！");
+        
+        // 电量
+        float v_bat = id(m5paper_battery_voltage).state;
+        if (!isnan(v_bat)) {
+          constexpr float min_v = 3.52f, max_v = 4.15f;
+          float pct = (v_bat - min_v) / (max_v - min_v) * 100.0f;
+          pct = clamp(pct, 0.0f, 100.0f);
+          it.printf(content_x + content_width / 2, 150, id(cn_font), TextAlign::TOP_CENTER, "电量：%.0f%%", pct);
+        } else {
+          it.print(content_x + content_width / 2, 150, id(cn_font), TextAlign::TOP_CENTER, "电量：--%");
+        }
 
-      // 温湿度
-      it.printf(it.get_width()/2, 300, id(cn_font), TextAlign::TOP_CENTER, "温度：%.1f℃    湿度：%.1f%%", 
-                id(m5paper_temperature).state, id(m5paper_humidity).state);
+        // 时间
+        it.strftime(content_x + content_width / 2, 220, id(cn_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M", id(rtc_time).now());
 
-      // 按钮 A
-      int btn_a_x = 100, btn_a_y = 400, btn_w = 200, btn_h = 60;
-      it.filled_rectangle(btn_a_x, btn_a_y, btn_w, btn_h);
-      it.rectangle(btn_a_x, btn_a_y, btn_w, btn_h); // 边框
-      it.print(btn_a_x + btn_w/2, btn_a_y + btn_h/2, id(cn_font), TextAlign::CENTER, "按钮 A");
+      } else if (page == 1) {
+        // ===== 页面2：环境 =====
+        it.print(content_x + content_width / 2, 80, id(big_font), TextAlign::TOP_CENTER, "环境信息");
 
-      // 按钮 B
-      int btn_b_x = it.get_width() - 100 - btn_w, btn_b_y = 400;
-      it.filled_rectangle(btn_b_x, btn_b_y, btn_w, btn_h);
-      it.rectangle(btn_b_x, btn_b_y, btn_w, btn_h);
-      it.print(btn_b_x + btn_w/2, btn_b_y + btn_h/2, id(cn_font), TextAlign::CENTER, "按钮 B");
+        // 本机温湿度
+        if (!isnan(id(m5paper_temperature).state) && !isnan(id(m5paper_humidity).state)) {
+          it.printf(content_x + content_width / 2, 180, id(cn_font), TextAlign::TOP_CENTER, 
+                    "温度：%.1f℃\n湿度：%.1f%%", 
+                    id(m5paper_temperature).state, id(m5paper_humidity).state);
+        } else {
+          it.print(content_x + content_width / 2, 180, id(cn_font), TextAlign::TOP_CENTER, "温湿度：--");
+        }
+      }
 
 # 触摸屏：GT911 电容触摸芯片
 touchscreen:
@@ -142,54 +167,26 @@ touchscreen:
       then:
         # 触摸测试
         - lambda: |-
-            static bool a_pressed = false;
-            static bool b_pressed = false;
+            // 获取触摸坐标（已变换）
+            int x = touch.x;
+            int y = touch.y;
 
-            int touch_x = touch.x;
-            int touch_y = touch.y;
+            const int menu_width = 180;
 
-            // 按钮区域定义（与 lambda 中一致）
-            const int btn_w = 200, btn_h = 60;
-            const int btn_a_x = 100, btn_a_y = 400;
-            const int btn_b_x = id(m5paper_display).get_width() - 100 - btn_w;
-            const int btn_b_y = 400;
-
-            auto draw_button_a = [&](bool pressed) {
-              id(m5paper_display).filled_rectangle(btn_a_x, btn_a_y, btn_w, btn_h, pressed ? 0x000000 : 0xFFFFFF);
-              id(m5paper_display).rectangle(btn_a_x, btn_a_y, btn_w, btn_h);
-              id(m5paper_display).print(btn_a_x + btn_w/2, btn_a_y + btn_h/2, id(cn_font), TextAlign::CENTER, "按钮 A");
-              id(m5paper_display).partial_refresh(btn_a_x - 5, btn_a_y - 5, btn_w + 10, btn_h + 10);
-            };
-
-            auto draw_button_b = [&]() {
-              // 重绘时间 + 温湿度区域（局部刷新）
-              int w = id(m5paper_display).get_width();
-              id(m5paper_display).filled_rectangle(w/2 - 200, 140, 400, 200, 0xFFFFFF); // 覆盖旧内容
-
-              id(m5paper_display).strftime(w/2, 150, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M %A", id(rtc_time).now());
-              id(m5paper_display).printf(w/2, 300, id(cn_font), TextAlign::TOP_CENTER, "温度：%.1f℃    湿度：%.1f%%", 
-                                         id(m5paper_temperature).state, id(m5paper_humidity).state);
-              id(m5paper_display).partial_refresh(w/2 - 210, 140, 420, 200);
-            };
-
-            if (touch.state) { // 按下
-              if (touch_x >= btn_a_x && touch_x <= btn_a_x + btn_w &&
-                  touch_y >= btn_a_y && touch_y <= btn_a_y + btn_h) {
-                a_pressed = true;
-                draw_button_a(true);
+            // 只响应左侧菜单区域
+            if (x < menu_width) {
+              if (y >= 80 && y <= 160) {
+                // 点击“欢迎”区域
+                id(current_page) = 0;
+              } else if (y >= 180 && y <= 260) {
+                // 点击“环境”区域
+                id(current_page) = 1;
               }
-              else if (touch_x >= btn_b_x && touch_x <= btn_b_x + btn_w &&
-                       touch_y >= btn_b_y && touch_y <= btn_b_y + btn_h) {
-                b_pressed = true;
-                draw_button_b();
-              }
-            } else { // 抬起
-              if (a_pressed) {
-                draw_button_a(false);
-                a_pressed = false;
-              }
-              b_pressed = false;
+
+              // 触发屏幕刷新
+              id(m5paper_display)->update();
             }
+
 
 # 时间同步配置
 time:
