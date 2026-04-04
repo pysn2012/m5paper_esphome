@@ -5,7 +5,7 @@ substitutions:
 
   # 允许显示的字符集
   allowed_characters: |-
-    一二三四五六七八九十百千万亿温度湿时间分秒你好世界我他和开心快乐电量·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
+    一二三四五六七八九十百千万亿温湿度时间分秒你好世界我他和开心快乐电量欢迎环境信息·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
  
 # ESPHome 核心配置
 esphome:
@@ -116,7 +116,7 @@ display:
       it.rectangle(5, 5, it.get_width() - 10, it.get_height() - 10);
 
       // === 左侧菜单 ===
-      it.filled_rectangle(0, 0, menu_width, it.get_height()); // 背景色区分
+      it.rectangle(0, 0, menu_width, it.get_height()); // 背景色区分
       it.print(menu_width / 2, 100, id(cn_font), TextAlign::CENTER, "欢迎");
       it.print(menu_width / 2, 200, id(cn_font), TextAlign::CENTER, "环境");
 
@@ -147,7 +147,7 @@ display:
         // 本机温湿度
         if (!isnan(id(m5paper_temperature).state) && !isnan(id(m5paper_humidity).state)) {
           it.printf(content_x + content_width / 2, 180, id(cn_font), TextAlign::TOP_CENTER, 
-                    "温度：%.1f℃\n湿度：%.1f%%", 
+                    "温度：%.1f℃  湿度：%.1f%%", 
                     id(m5paper_temperature).state, id(m5paper_humidity).state);
         } else {
           it.print(content_x + content_width / 2, 180, id(cn_font), TextAlign::TOP_CENTER, "温湿度：--");
