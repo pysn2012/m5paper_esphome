@@ -205,12 +205,17 @@ display:
         y_offset += line_height;
       }
 
-      it.print(30, 400, id(icons_gfont), TextAlign::TOP_LEFT, "\U0000e425"); // 测试
+      // 显示电量（测试功耗）
+      if (!isnan(bat_pct)) {
+        it.printf(30, 400, id(cn_font), TextAlign::TOP_LEFT, "电池电量 %.1f%%", bat_pct);
+      } else {
+        it.print(30, 400, id(cn_font), TextAlign::TOP_LEFT, "电池电量 ---%");
+      }
 
       // === 8. 本机温湿度（固定在底部）===
       if (!isnan(id(m5paper_temperature).state) && !isnan(id(m5paper_humidity).state)) {
         it.print(30, 480, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F"); // 温度计
-        it.printf(80, 480, id(cn_font), TextAlign::TOP_LEFT, "本机：温度 %.1f℃ / 湿度 %.0f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
+        it.printf(80, 480, id(cn_font), TextAlign::TOP_LEFT, "本机：温度 %.1f℃ / 湿度 %.1f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
       }
           
       // 边框

@@ -2,6 +2,10 @@
 
 适用于搭载 IT8951E 控制器的 M5Stack Paper V1.1 电子纸显示屏的 ESPHome 外部组件。
 
+详细教程可查阅我的微信公众号：
+
+![wx](https://raw.githubusercontent.com/pysn2012/wake-word-voice-assistants/main/casita/wx.jpg)
+
 ## 硬件参数
 
 |            规格项             |              数值              |
