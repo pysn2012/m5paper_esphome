@@ -5,7 +5,7 @@ substitutions:
 
   # 允许显示的字符集
   allowed_characters: |-
-    一二三四五六七八九十百千万亿星期温度湿时间日分秒你好世界我他和开心快乐总电量客厅卧室热水器冰箱冷冻藏排插本机功率·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
+    一二三四五六七八九十百千万亿星期温度湿时间日分秒你好世界我他和开心快乐总电量客厅卧室热水器冰箱冷冻藏排插本机功率运行池·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
  
 # ESPHome 核心配置
 esphome:
@@ -205,7 +205,13 @@ display:
         y_offset += line_height;
       }
 
-      // 显示电量（测试功耗）
+      // 临时.设备运行时间+显示电量（测试功耗）
+      if (id(device_uptime).has_state()) {
+        uint32_t secs = (uint32_t)id(device_uptime).state;
+        uint32_t hours = secs / 3600;
+        uint32_t mins = (secs % 3600) / 60;
+        it.printf(30, 360, id(cn_font), TextAlign::TOP_LEFT, "运行时间：%02d:%02d", hours, mins);
+      }
       if (!isnan(bat_pct)) {
         it.printf(30, 400, id(cn_font), TextAlign::TOP_LEFT, "电池电量 %.1f%%", bat_pct);
       } else {
@@ -260,7 +266,13 @@ sensor:
     attenuation: 12db                            # 使用 12dB 衰减（支持最高 ~3.9V 输入）
     filters:
       - multiply: 2                              # 分压电阻比为 1:1，所以乘以 2 得到真实电压
-  
+
+  # 设备运行时间
+  - platform: uptime
+    name: ${device_name} Uptime
+    id: device_uptime
+    #update_interval: 60s
+
   # SHT30温湿度传感器（I2C 地址 0x44）
   - platform: sht3xd
     temperature:
