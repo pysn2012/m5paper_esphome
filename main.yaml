@@ -223,7 +223,7 @@ display:
       }
           
       // 边框
-      it.rectangle(10, 10, it.get_width() - 20, it.get_height() - 20);
+      // it.rectangle(10, 10, it.get_width() - 20, it.get_height() - 20);
 
 # 重启开关
 switch:
