@@ -5,7 +5,7 @@ substitutions:
 
   # 允许显示的字符集
   allowed_characters: |-
-    一二三四五六七八九十百千万亿星期温度湿时间日分秒你好世界我他和开心快乐总电量客厅卧室热水器冰箱冷冻藏排插本机功率运行池·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
+    一二三四五六七八九十百千万亿星期温度湿时间日分秒你好世界我他和开心快乐总电量客厅卧室热水器冰箱冷冻藏排插本机功率运行池压流阻·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
  
 # ESPHome 核心配置
 esphome:
@@ -126,6 +126,7 @@ display:
     rotation: 0                   # 屏幕旋转角度，0是横向
     reversed: False               # 不反转颜色
     update_interval: never        # 不自动刷新，仅手动更新
+    full_update_every: 10         # 每10次更新执行一次全刷
     # 在屏幕上绘制内容
     lambda: |-
       // === 1. 顶部时间（大字居中）===
@@ -168,7 +169,7 @@ display:
 
       // === 4. 客厅温湿度 ===
       if (!isnan(id(xiaomi_temp).state) && !isnan(id(xiaomi_humi).state)) {
-        it.print(30, y_offset, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC"); // 小房子
+        it.print(30, y_offset + 5, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC"); // 小房子
         it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "客厅：温度 %.1f℃ / 湿度 %.1f%%", id(xiaomi_temp).state, id(xiaomi_humi).state);
         y_offset += line_height;
       }
@@ -205,12 +206,9 @@ display:
         y_offset += line_height;
       }
 
-      // 临时.设备运行时间+显示电量（测试功耗）
-      if (id(device_uptime).has_state()) {
-        uint32_t secs = (uint32_t)id(device_uptime).state;
-        uint32_t hours = secs / 3600;
-        uint32_t mins = (secs % 3600) / 60;
-        it.printf(30, 360, id(cn_font), TextAlign::TOP_LEFT, "运行时间：%02d:%02d", hours, mins);
+      // 临时.电池电压+电量（测试功耗）
+      if (!isnan(id(m5paper_battery_voltage).state)) {
+        it.printf(30, 350, id(cn_font), TextAlign::TOP_LEFT, "电池电压：%.1fV", id(m5paper_battery_voltage).state);
       }
       if (!isnan(bat_pct)) {
         it.printf(30, 400, id(cn_font), TextAlign::TOP_LEFT, "电池电量 %.1f%%", bat_pct);
@@ -236,7 +234,7 @@ switch:
 # 深度睡眠配置（基于 BM8563 RTC 定时唤醒）
 deep_sleep:
   id: deep_sleep_10min
-  run_duration: 40s      # 唤醒后最多运行 40 秒（足够完成联网+刷新）
+  run_duration: 30s      # 唤醒后最多运行 40 秒（足够完成联网+刷新）
   sleep_duration: 10min   # 睡眠 10 分钟
 
 # 时间同步配置
