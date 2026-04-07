@@ -139,15 +139,7 @@ display:
       it.print(it.get_width() / 2, 90, id(cn_font), TextAlign::TOP_CENTER, weekdays[wd]);
 
       // === 3. 电池图标（右上角）===
-      float v_bat = id(m5paper_battery_voltage).state;
-      float bat_pct = NAN;
-      if (!isnan(v_bat)) {
-        constexpr float min_v = 3.52f;   // 0%
-        constexpr float max_v = 4.15f;   // 100%
-        bat_pct = (v_bat - min_v) / (max_v - min_v) * 100.0f;
-        bat_pct = clamp(bat_pct, 0.0f, 100.0f);
-      }
-      
+      float bat_pct = id(m5paper_battery_level).state;
       const char* bat_icon = "\U000F007A"; // 10% (最低)
       if (!isnan(bat_pct)) {
         if (bat_pct >= 95) bat_icon = "\U000F0079"; // 满电
@@ -169,21 +161,21 @@ display:
 
       // === 4. 客厅温湿度 ===
       if (!isnan(id(xiaomi_temp).state) && !isnan(id(xiaomi_humi).state)) {
-        it.print(30, y_offset + 8, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC"); // 小房子
+        it.print(30, y_offset + 9, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC"); // 小房子
         it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "客厅：温度 %.1f℃ / 湿度 %.1f%%", id(xiaomi_temp).state, id(xiaomi_humi).state);
         y_offset += line_height;
       }
 
       // === 5. 卧室温湿度 ===
       if (!isnan(id(qp_temp).state) && !isnan(id(qp_humi).state)) {
-        it.print(30, y_offset + 8, id(icons_font), TextAlign::TOP_LEFT, "\U000F02E3"); // 卧室
-        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "卧室：温度 %.1f℃ / 湿度 %.1f%%", id(xiaomi_temp).state, id(xiaomi_humi).state);
+        it.print(30, y_offset + 9, id(icons_font), TextAlign::TOP_LEFT, "\U000F02E3"); // 卧室
+        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "卧室：温度 %.1f℃ / 湿度 %.1f%%", id(qp_temp).state, id(qp_humi).state);
         y_offset += line_height;
       }
 
       // === 6. 冰箱温度（冷藏 + 冷冻）===
       if (!isnan(id(icebox_temp01).state) && !isnan(id(icebox_temp02).state)) {
-        it.print(30, y_offset + 8, id(icons_font), TextAlign::TOP_LEFT, "\U000F0290"); // 冰箱
+        it.print(30, y_offset + 9, id(icons_font), TextAlign::TOP_LEFT, "\U000F0290"); // 冰箱
         it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "冰箱：冷藏 %.1f℃ / 冷冻 %.1f℃", id(icebox_temp01).state, id(icebox_temp02).state);
         y_offset += line_height;
       }
@@ -192,7 +184,7 @@ display:
       bool has_power = !isnan(id(cmpower_power).state);
       bool has_energy = !isnan(id(total_power).state);
       if (has_power || has_energy) {
-        it.print(30, y_offset + 8, id(icons_font), TextAlign::TOP_LEFT, "\U000F140B"); // 闪电（代表电力）
+        it.print(30, y_offset + 9, id(icons_font), TextAlign::TOP_LEFT, "\U000F140B"); // 闪电（代表电力）
         char buf[100] = "排插：";
         if (has_power) {
           sprintf(buf + strlen(buf), "功率 %.1fW", id(cmpower_power).state);
@@ -218,7 +210,7 @@ display:
 
       // === 8. 本机温湿度（固定在底部）===
       if (!isnan(id(m5paper_temperature).state) && !isnan(id(m5paper_humidity).state)) {
-        it.print(30, 486, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F"); // 温度计
+        it.print(30, 489, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F"); // 温度计
         it.printf(80, 480, id(cn_font), TextAlign::TOP_LEFT, "本机：温度 %.1f℃ / 湿度 %.1f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
       }
           
@@ -256,7 +248,6 @@ m5paper:
 sensor:
   # 电池电压检测（通过 ADC 读取）
   - platform: adc
-    disabled_by_default: true                    # 默认不在 HA 中显示
     pin: GPIO35                                  # ADC 引脚
     name: ${device_name} battery voltage
     id: m5paper_battery_voltage
@@ -265,11 +256,23 @@ sensor:
     filters:
       - multiply: 2                              # 分压电阻比为 1:1，所以乘以 2 得到真实电压
 
-  # 设备运行时间
-  - platform: uptime
-    name: ${device_name} Uptime
-    id: device_uptime
-    #update_interval: 60s
+  # 电池电量百分比（基于电压计算）
+  - platform: template
+    name: ${device_name} battery level
+    id: m5paper_battery_level
+    unit_of_measurement: '%'
+    device_class: "battery"
+    state_class: "measurement"
+    icon: mdi:battery-high
+    update_interval: 60s
+    lambda: |-
+      constexpr float min_level = 3.52;   // 电池空载截止电压（约 0%）
+      constexpr float max_level = 4.15;   // 电池满电电压（约 100%）
+      return ((id(m5paper_battery_voltage).state - min_level) / (max_level - min_level)) * 100.00;
+    filters:
+      - clamp:
+          min_value: 0
+          max_value: 100
 
   # SHT30温湿度传感器（I2C 地址 0x44）
   - platform: sht3xd
