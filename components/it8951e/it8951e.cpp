@@ -407,14 +407,14 @@ void IT8951ESensor::write_display(update_mode_e mode) {
 
 // 清屏
 void IT8951ESensor::clear(bool init) {
-    // Display::clear();  // 测试清屏
+    Display::clear();
 
     if (!init || !this->initialized_)
         return;
 
     const bool use_init = !this->did_init_clear_ || (this->clear_count_ % INIT_CLEAR_EVERY == 0);
     const update_mode_e clear_mode = use_init ? update_mode_e::UPDATE_MODE_INIT
-                                              : update_mode_e::UPDATE_MODE_DU;   // GC16改为DU
+                                              : update_mode_e::UPDATE_MODE_GC16;   // GC16改为DU没用
     this->did_init_clear_ = true;
     this->clear_count_++;
     this->write_display(clear_mode);
