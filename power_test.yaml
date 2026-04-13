@@ -123,7 +123,7 @@ display:
     cs_pin: GPIO15                # 片选引脚
     reset_pin: GPIO23             # 复位引脚
     busy_pin: GPIO27              # 忙信号引脚
-    rotation: 90                  # 屏幕旋转角度，0是横向
+    rotation: 0                   # 屏幕旋转角度，0是横向
     reversed: False               # 不反转颜色
     update_interval: never        # 不自动刷新，仅手动更新
     full_update_every: 10         # 每10次更新执行一次全刷
@@ -303,52 +303,6 @@ sensor:
     id: qp_humi
     entity_id: sensor.cgllc_cn_blt_3_1mitqg1roc800_dove_relative_humidity_p_2_2
 
-  # ZM1
-  - platform: homeassistant
-    name: zm1 temperature
-    entity_id: sensor.zm1_b0f89324aed7_temperature
-    id: zm1_temp
-    unit_of_measurement: "°C"
-  - platform: homeassistant
-    name: zm1 humidity
-    id: zm1_humi
-    entity_id: sensor.zm1_b0f89324aed7_humidity
-  - platform: homeassistant
-    name: zm1 pm25
-    id: zm1_pm25
-    entity_id: sensor.zm1_b0f89324aed7_pm25
-  - platform: homeassistant
-    name: zm1 hcho
-    id: zm1_hcho
-    entity_id: sensor.zm1_b0f89324aed7_hcho
-    unit_of_measurement: "mg/m3"
-
-  # 群晖
-  - platform: homeassistant
-    name: nas temperature
-    entity_id: sensor.cnas2010_temperature
-    id: nas_temp
-    unit_of_measurement: "°C"
-  - platform: homeassistant
-    name: nas cpu
-    id: nas_cpu
-    entity_id: sensor.cnas2010_cpu_utilization_total
-  - platform: homeassistant
-    name: nas mem
-    id: nas_mem
-    entity_id: sensor.cnas2010_memory_total_real
-    unit_of_measurement: "MB"
-  - platform: homeassistant
-    name: disk1 temperature
-    entity_id: sensor.cnas2010_disk_1_temperature
-    id: disk1_temp
-    unit_of_measurement: "°C"
-  - platform: homeassistant
-    name: disk2 temperature
-    entity_id: sensor.cnas2010_disk_2_temperature
-    id: disk2_temp
-    unit_of_measurement: "°C"
-
   # 冰箱温度
   - platform: homeassistant
     name: icebox temp01
@@ -361,34 +315,16 @@ sensor:
     id: icebox_temp02
     unit_of_measurement: "°C"
 
-  # NAS排插功率
+  # 排插功率
   - platform: homeassistant
-    name: cmpower1 power
+    name: cmpower power
     entity_id: sensor.cmpower_w1_270cee_24_gong_lu
-    id: cmpower1_power
+    id: cmpower_power
     unit_of_measurement: "W"
   - platform: homeassistant
-    name: cm1 total power
+    name: total power
     entity_id: sensor.cmpower_w1_270cee_29_zong_dian_liang
-    id: cm1_total_power
+    id: total_power
     unit_of_measurement: "Wh"
 
-  # 书桌排插功率
-  - platform: homeassistant
-    name: cmpower2 power
-    entity_id: sensor.cmpower_w1_26982d_24_gong_lu
-    id: cmpower2_power
-    unit_of_measurement: "W"
-  - platform: homeassistant
-    name: cm2 total power
-    entity_id: sensor.cmpower_w1_26982d_29_zong_dian_liang
-    id: cm2_total_power
-    unit_of_measurement: "Wh"
-
-  # 次卧空调功率
-  - platform: homeassistant
-    name: ac2 power
-    entity_id: sensor.lumi_cn_333988242_mcn02_electric_power_p_5_1
-    id: ac2_power
-    unit_of_measurement: "W"
 
