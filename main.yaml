@@ -5,7 +5,7 @@ substitutions:
 
   # 允许显示的字符集
   allowed_characters: |-
-    一二三四五六七八九十百千万亿星期温度湿时间日分秒你好世界我他和开心快乐总电量客厅卧室热水器冰箱冷冻藏排插本机功率运行池压流阻·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
+    一二三四五六七八九十百千万亿星期温度湿时间日分秒你好世界我他和开心快乐总电量客厅卧室热水器冰箱冷冻藏排插本机功率运行池压流阻厦门·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
  
 # ESPHome 核心配置
 esphome:
@@ -96,13 +96,22 @@ font:
       - "\U000F0081"  # 80%
       - "\U000F0082"  # 90%
       - "\U000F0079"  # 满电量
-      - "\U000F02DC"  # 小房子
-      - "\U000F050F"  # 温度计
+      - "\U000F0590"  # 天气
+      - "\U000F196F"  # 广播
+      - "\U000F02DC"  # 客厅
+      - "\U000F050F"  # 温度
       - "\U000F058E"  # 湿度
-      - "\U000F0290"  # 冰箱
+      - "\U000F0F85"  # 气压
+      - "\U000F0290"  # 厨房冰箱
       - "\U000F02E3"  # 卧室
       - "\U000F140B"  # 闪电
-      - "\U000F1A57"  # 电量
+      - "\U000F1A58"  # 总电量
+      - "\U000F059D"  # 风量
+      - "\U000F001B"  # 空调
+      - "\U000F0EE0"  # CPU
+      - "\U000F035B"  # 内存
+      - "\U000F0BAC"  # PM2.5
+      - "\U000F07E4"  # 甲醛
 
 # SPI 总线
 spi:
@@ -129,101 +138,216 @@ display:
     full_update_every: 10         # 每10次更新执行一次全刷
     # 在屏幕上绘制内容
     lambda: |-
-      // === 1. 顶部时间（大字居中）===
-      it.strftime(it.get_width() / 2, 20, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M", id(rtc_time).now());
+      const int WIDTH = it.get_width();   // 540
+      const int HEIGHT = it.get_height(); // 960
 
-      // === 2. 星期（紧接时间下方，小字居中）===
-      auto wday = id(rtc_time).now().strftime("%w");
-      const char* weekdays[] = {"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"};
-      int wd = std::min(6, std::max(0, (int)std::stoi(wday)));
-      it.print(it.get_width() / 2, 90, id(cn_font), TextAlign::TOP_CENTER, weekdays[wd]);
+      // === 辅助函数：绘制水平分隔线 ===
+      auto draw_hline = [&](int y) {
+        it.line(10, y, WIDTH - 10, y);
+      };
 
-      // === 3. 电池图标（右上角）===
+      // === 0. 右上角电池图标 ===
       float v_bat = id(m5paper_battery_voltage).state;
       float bat_pct = NAN;
       if (!isnan(v_bat)) {
-        constexpr float min_v = 3.52f;   // 0%
-        constexpr float max_v = 4.15f;   // 100%
+        constexpr float min_v = 3.52f;
+        constexpr float max_v = 4.15f;
         bat_pct = (v_bat - min_v) / (max_v - min_v) * 100.0f;
         bat_pct = clamp(bat_pct, 0.0f, 100.0f);
       }
-      
-      const char* bat_icon = "\U000F007A"; // 10% (最低)
+      const char* bat_icon = "\U000F007A";
       if (!isnan(bat_pct)) {
-        if (bat_pct >= 95) bat_icon = "\U000F0079"; // 满电
-        else if (bat_pct >= 85) bat_icon = "\U000F0082"; // 90%
-        else if (bat_pct >= 75) bat_icon = "\U000F0081"; // 80%
-        else if (bat_pct >= 65) bat_icon = "\U000F0080"; // 70%
-        else if (bat_pct >= 55) bat_icon = "\U000F007F"; // 60%
-        else if (bat_pct >= 45) bat_icon = "\U000F007E"; // 50%
-        else if (bat_pct >= 35) bat_icon = "\U000F007D"; // 40%
-        else if (bat_pct >= 25) bat_icon = "\U000F007C"; // 30%
-        else if (bat_pct >= 15) bat_icon = "\U000F007B"; // 20%
-        else bat_icon = "\U000F007A"; // 10%
+        if (bat_pct >= 95) bat_icon = "\U000F0079";
+        else if (bat_pct >= 85) bat_icon = "\U000F0082";
+        else if (bat_pct >= 75) bat_icon = "\U000F0081";
+        else if (bat_pct >= 65) bat_icon = "\U000F0080";
+        else if (bat_pct >= 55) bat_icon = "\U000F007F";
+        else if (bat_pct >= 45) bat_icon = "\U000F007E";
+        else if (bat_pct >= 35) bat_icon = "\U000F007D";
+        else if (bat_pct >= 25) bat_icon = "\U000F007C";
+        else if (bat_pct >= 15) bat_icon = "\U000F007B";
+        else bat_icon = "\U000F007A";
       }
-      it.print(it.get_width() - 10, 25, id(icons_font), TextAlign::TOP_RIGHT, bat_icon);
+      it.print(WIDTH - 10, 10, id(icons_font), TextAlign::TOP_RIGHT, bat_icon);
 
-      // 起始 Y 坐标（从 140 开始逐行向下）
-      int y_offset = 140;
-      const int line_height = 50;
+      // === 1. 顶部时间 ===
+      int y = 20;
+      it.strftime(WIDTH / 2, y, id(big_font), TextAlign::TOP_CENTER, "%Y-%m-%d %H:%M", id(rtc_time).now());
+      y += 65;
+      auto wday = id(rtc_time).now().strftime("%w");
+      const char* weekdays[] = {"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"};
+      int wd = std::min(6, std::max(0, (int)std::stoi(wday)));
+      it.print(WIDTH / 2, y, id(cn_font), TextAlign::TOP_CENTER, weekdays[wd]);
+      y += 45;
 
-      // === 4. 客厅温湿度 ===
-      if (!isnan(id(xiaomi_temp).state) && !isnan(id(xiaomi_humi).state)) {
-        it.print(30, y_offset + 9, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC"); // 小房子
-        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "客厅：温度 %.1f℃ / 湿度 %.1f%%", id(xiaomi_temp).state, id(xiaomi_humi).state);
-        y_offset += line_height;
-      }
+      // === 分隔线 ===
+      draw_hline(y);
+      y += 15;
 
-      // === 5. 卧室温湿度 ===
-      if (!isnan(id(qp_temp).state) && !isnan(id(qp_humi).state)) {
-        it.print(30, y_offset + 9, id(icons_font), TextAlign::TOP_LEFT, "\U000F02E3"); // 卧室
-        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "卧室：温度 %.1f℃ / 湿度 %.1f%%", id(qp_temp).state, id(qp_humi).state);
-        y_offset += line_height;
-      }
+      // === 2. 厦门天气 ===
+      it.print(20, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0590"); // 天气
+      it.print(60, y + 5, id(cn_font), TextAlign::TOP_LEFT, "厦门天气");
+      y += 35;
 
-      // === 6. 冰箱温度（冷藏 + 冷冻）===
-      if (!isnan(id(icebox_temp01).state) && !isnan(id(icebox_temp02).state)) {
-        it.print(30, y_offset + 9, id(icons_font), TextAlign::TOP_LEFT, "\U000F0290"); // 冰箱
-        it.printf(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, "冰箱：冷藏 %.1f℃ / 冷冻 %.1f℃", id(icebox_temp01).state, id(icebox_temp02).state);
-        y_offset += line_height;
-      }
-
-      // === 7. 排插功率 & 总电量 ===
-      bool has_power = !isnan(id(cmpower_power).state);
-      bool has_energy = !isnan(id(total_power).state);
-      if (has_power || has_energy) {
-        it.print(30, y_offset + 9, id(icons_font), TextAlign::TOP_LEFT, "\U000F140B"); // 闪电（代表电力）
-        char buf[100] = "排插：";
-        if (has_power) {
-          sprintf(buf + strlen(buf), "功率 %.1fW", id(cmpower_power).state);
-        } else {
-          strcat(buf, "--W");
-        }
-        if (has_energy) {
-          sprintf(buf + strlen(buf), " / 总电量 %.1fkWh", id(total_power).state / 1000.0f);
-        }
-        it.print(80, y_offset, id(cn_font), TextAlign::TOP_LEFT, buf);
-        y_offset += line_height;
+      // 行1: 温/湿/压/风
+      char line1[120] = "";
+      bool has_line1 = false;
+      if (!isnan(id(xiamen_temp).state)) { sprintf(line1, "%.1f℃", id(xiamen_temp).state); has_line1 = true; }
+      if (!isnan(id(xiamen_humi).state)) { if (has_line1) strcat(line1, "    "); sprintf(line1 + strlen(line1), "%.0f%%", id(xiamen_humi).state); has_line1 = true; }
+      if (!isnan(id(xiamen_pressure).state)) { if (has_line1) strcat(line1, "    "); sprintf(line1 + strlen(line1), "%.0fhPa", id(xiamen_pressure).state); has_line1 = true; }
+      if (!isnan(id(xiamen_windspeed).state)) { if (has_line1) strcat(line1, "    "); sprintf(line1 + strlen(line1), "%.1fkm/h", id(xiamen_windspeed).state); has_line1 = true; }
+      if (has_line1) {
+        it.print(30, y, id(cn_font), TextAlign::TOP_LEFT, line1);
+        y += 30;
       }
 
-      // 临时.电池电压+电量（测试功耗）
+      // 行2: PM2.5 + HCHO (厦门无HCHO，但保留结构)
+      char line2[100] = "";
+      bool has_pm25 = !isnan(id(xiamen_pm25).state);
+      if (has_pm25) {
+        sprintf(line2, "\U000F0BAC %.0f", id(xiamen_pm25).state); // PM2.5
+      }
+      if (has_pm25) {
+        it.print(30, y, id(icons_font), TextAlign::TOP_LEFT, ""); // 占位图标
+        it.print(30, y, id(cn_font), TextAlign::TOP_LEFT, line2);
+        y += 30;
+      }
+
+      // 行3: 天气预报文本
+      if (id(xiamen_weather).state.has_value() && !id(xiamen_weather).state.value().empty()) {
+        it.print(30, y, id(cn_font), TextAlign::TOP_LEFT, id(xiamen_weather).state.value().c_str());
+        y += 35;
+      }
+
+      // === 分隔线 ===
+      draw_hline(y);
+      y += 15;
+
+      // === 3. 客厅 ===
+      it.print(20, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC"); // 客厅
+      it.print(60, y + 5, id(cn_font), TextAlign::TOP_LEFT, "客厅");
+      y += 35;
+
+      // 小米温湿度
+      if (!isnan(id(xiaomi_temp).state) || !isnan(id(xiaomi_humi).state)) {
+        char buf[80] = "";
+        if (!isnan(id(xiaomi_temp).state)) sprintf(buf, "\U000F050F %.1f℃", id(xiaomi_temp).state);
+        if (!isnan(id(xiaomi_humi).state)) { if (buf[0]) strcat(buf, "    "); sprintf(buf + strlen(buf), "\U000F058E %.0f%%", id(xiaomi_humi).state); }
+        it.print(30, y, id(icons_font), TextAlign::TOP_LEFT, "");
+        it.print(30, y, id(cn_font), TextAlign::TOP_LEFT, buf);
+        y += 28;
+      }
+
+      // ZM1 温湿度
+      if (!isnan(id(zm1_temp).state) || !isnan(id(zm1_humi).state)) {
+        char buf[80] = "";
+        if (!isnan(id(zm1_temp).state)) sprintf(buf, "\U000F050F %.1f℃", id(zm1_temp).state);
+        if (!isnan(id(zm1_humi).state)) { if (buf[0]) strcat(buf, "    "); sprintf(buf + strlen(buf), "\U000F058E %.0f%%", id(zm1_humi).state); }
+        it.print(30, y, id(icons_font), TextAlign::TOP_LEFT, "");
+        it.print(30, y, id(cn_font), TextAlign::TOP_LEFT, buf);
+        y += 28;
+      }
+
+      // ZM1 PM2.5 & HCHO
+      if (!isnan(id(zm1_pm25).state) || !isnan(id(zm1_hcho).state)) {
+        char buf[100] = "";
+        if (!isnan(id(zm1_pm25).state)) sprintf(buf, "\U000F0BAC %.0f", id(zm1_pm25).state);
+        if (!isnan(id(zm1_hcho).state)) { if (buf[0]) strcat(buf, "    "); sprintf(buf + strlen(buf), "\U000F07E4 %.2fmg/m³", id(zm1_hcho).state); }
+        it.print(30, y, id(icons_font), TextAlign::TOP_LEFT, "");
+        it.print(30, y, id(cn_font), TextAlign::TOP_LEFT, buf);
+        y += 28;
+      }
+
+      // 弱电箱功率
+      if (!isnan(id(cmpower1_power).state)) {
+        it.print(30, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F140B"); // 闪电
+        it.printf(70, y, id(cn_font), TextAlign::TOP_LEFT, "弱电箱: %.1fW", id(cmpower1_power).state);
+        y += 28;
+      }
+
+      // 群晖 CPU & 内存
+      if (!isnan(id(nas_cpu).state) || !isnan(id(nas_mem).state)) {
+        char buf[80] = "";
+        if (!isnan(id(nas_cpu).state)) sprintf(buf, "\U000F0EE0 %.0f%%", id(nas_cpu).state);
+        if (!isnan(id(nas_mem).state)) { if (buf[0]) strcat(buf, "    "); sprintf(buf + strlen(buf), "\U000F035B %.0fMB", id(nas_mem).state); }
+        it.print(30, y, id(icons_font), TextAlign::TOP_LEFT, "");
+        it.print(30, y, id(cn_font), TextAlign::TOP_LEFT, buf);
+        y += 28;
+      }
+
+      // 本机 SHT30
+      if (!isnan(id(m5paper_temperature).state) || !isnan(id(m5paper_humidity).state)) {
+        char buf[80] = "";
+        if (!isnan(id(m5paper_temperature).state)) sprintf(buf, "\U000F050F %.1f℃", id(m5paper_temperature).state);
+        if (!isnan(id(m5paper_humidity).state)) { if (buf[0]) strcat(buf, "    "); sprintf(buf + strlen(buf), "\U000F058E %.0f%%", id(m5paper_humidity).state); }
+        it.print(30, y, id(icons_font), TextAlign::TOP_LEFT, "");
+        it.print(30, y, id(cn_font), TextAlign::TOP_LEFT, buf);
+        y += 28;
+      }
+
+      // === 分隔线 ===
+      draw_hline(y);
+      y += 15;
+
+      // === 4. 卧室 ===
+      it.print(20, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F02E3"); // 卧室
+      it.print(60, y + 5, id(cn_font), TextAlign::TOP_LEFT, "卧室");
+      y += 35;
+
+      // 青萍温湿度
+      if (!isnan(id(qp_temp).state) || !isnan(id(qp_humi).state)) {
+        char buf[80] = "";
+        if (!isnan(id(qp_temp).state)) sprintf(buf, "\U000F050F %.1f℃", id(qp_temp).state);
+        if (!isnan(id(qp_humi).state)) { if (buf[0]) strcat(buf, "    "); sprintf(buf + strlen(buf), "\U000F058E %.0f%%", id(qp_humi).state); }
+        it.print(30, y, id(icons_font), TextAlign::TOP_LEFT, "");
+        it.print(30, y, id(cn_font), TextAlign::TOP_LEFT, buf);
+        y += 28;
+      }
+
+      // 空调功率
+      if (!isnan(id(ac2_power).state)) {
+        it.print(30, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F001B"); // 空调
+        it.printf(70, y, id(cn_font), TextAlign::TOP_LEFT, "空调: %.1fW", id(ac2_power).state);
+        y += 28;
+      }
+
+      // 工作台功率
+      if (!isnan(id(cmpower2_power).state)) {
+        it.print(30, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F140B"); // 闪电
+        it.printf(70, y, id(cn_font), TextAlign::TOP_LEFT, "工作台: %.1fW", id(cmpower2_power).state);
+        y += 28;
+      }
+
+      // === 分隔线 ===
+      draw_hline(y);
+      y += 15;
+
+      // === 5. 厨房 ===
+      it.print(20, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0290"); // 冰箱
+      it.print(60, y + 5, id(cn_font), TextAlign::TOP_LEFT, "厨房");
+      y += 35;
+
+      // 冰箱温度
+      if (!isnan(id(icebox_temp01).state) || !isnan(id(icebox_temp02).state)) {
+        char buf[80] = "";
+        if (!isnan(id(icebox_temp01).state)) sprintf(buf, "\U000F0290 冷藏 %.1f℃", id(icebox_temp01).state);
+        if (!isnan(id(icebox_temp02).state)) { if (buf[0]) strcat(buf, "    "); sprintf(buf + strlen(buf), "\U000F0290 冷冻 %.1f℃", id(icebox_temp02).state); }
+        it.print(30, y, id(icons_font), TextAlign::TOP_LEFT, "");
+        it.print(30, y, id(cn_font), TextAlign::TOP_LEFT, buf);
+        y += 35;
+      }
+
+      // === 分隔线 ===
+      draw_hline(y);
+      y += 15;
+
+      // === 底部状态 ===
       if (!isnan(id(m5paper_battery_voltage).state)) {
-        it.printf(30, 350, id(cn_font), TextAlign::TOP_LEFT, "电池电压：%.2fV", id(m5paper_battery_voltage).state);
+        it.printf(20, HEIGHT - 30, id(cn_font), TextAlign::BOTTOM_LEFT, "电压: %.2fV", id(m5paper_battery_voltage).state);
       }
       if (!isnan(bat_pct)) {
-        it.printf(30, 400, id(cn_font), TextAlign::TOP_LEFT, "电池电量 %.1f%%", bat_pct);
-      } else {
-        it.print(30, 400, id(cn_font), TextAlign::TOP_LEFT, "电池电量 ---%");
+        it.printf(WIDTH - 20, HEIGHT - 30, id(cn_font), TextAlign::BOTTOM_RIGHT, "电量: %.0f%%", bat_pct);
       }
-
-      // === 8. 本机温湿度（固定在底部）===
-      if (!isnan(id(m5paper_temperature).state) && !isnan(id(m5paper_humidity).state)) {
-        it.print(30, 489, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F"); // 温度计
-        it.printf(80, 480, id(cn_font), TextAlign::TOP_LEFT, "本机：温度 %.1f℃ / 湿度 %.1f%%", id(m5paper_temperature).state, id(m5paper_humidity).state);
-      }
-          
-      // 边框
-      // it.rectangle(10, 10, it.get_width() - 20, it.get_height() - 20);
 
 # 重启开关
 switch:
@@ -280,6 +404,31 @@ sensor:
       icon: mdi:water-percent
     address: 0x44
     # update_interval: 60s
+
+  # 厦门天气
+  - platform: homeassistant
+    name: xiamen temperature
+    entity_id: sensor.xiamen_temperature
+    id: xiamen_temp
+    unit_of_measurement: "°C"
+  - platform: homeassistant
+    name: xiamen humidity
+    id: xiamen_humi
+    entity_id: sensor.xiamen_humidity
+  - platform: homeassistant
+    name: xiamen pressure
+    id: xiamen_pressure
+    entity_id: sensor.xiamen_atmospheric_pressure
+    unit_of_measurement: "hPa"
+  - platform: homeassistant
+    name: xiamen pm25
+    id: xiamen_pm25
+    entity_id: sensor.xiamen_pm25
+  - platform: homeassistant
+    name: xiamen windspeed
+    id: xiamen_windspeed
+    entity_id: sensor.xiamen_wind_speed
+    unit_of_measurement: "km/h"
 
   # 小米温湿度计
   - platform: homeassistant
@@ -392,3 +541,9 @@ sensor:
     id: ac2_power
     unit_of_measurement: "W"
 
+# 文本传感器
+text_sensor:
+  # 厦门天气预报
+  - platform: homeassistant
+    id: xiamen_weather
+    entity_id: sensor.xiamen_forecast_minutely
