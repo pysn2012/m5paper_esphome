@@ -214,8 +214,8 @@ display:
       }
 
       // 行3: 天气预报文本
-      if (id(xiamen_weather).state.has_value() && !id(xiamen_weather).state.value().empty()) {
-        it.print(30, y, id(cn_font), TextAlign::TOP_LEFT, id(xiamen_weather).state.value().c_str());
+      if (!id(xiamen_weather).state.empty()) {
+        it.print(30, y, id(cn_font), TextAlign::TOP_LEFT, id(xiamen_weather).state.c_str());
         y += 35;
       }
 
