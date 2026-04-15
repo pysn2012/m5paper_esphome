@@ -273,9 +273,9 @@ display:
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fW", id(cmpower1_power).state);
         x += 80;
       }
-      if (!isnan(id(cmpower1_energy).state)) {
+      if (!isnan(id(cm1_total_power).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F1A58");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fkWh", id(cmpower1_energy).state / 1000.0f);
+        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fkWh", id(cm1_total_power).state / 1000.0f);
       }
       y += 45;
 
@@ -292,16 +292,16 @@ display:
       }
       y += 45;
 
-      // 群晖硬盘温度（假设为 nas_disk1_temp, nas_disk2_temp）
+      // 群晖硬盘温度
       x = 50;
-      if (!isnan(id(nas_disk1_temp).state)) {
+      if (!isnan(id(disk1_temp).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "硬盘： \U000F050F");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(nas_disk1_temp).state);
+        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(disk1_temp).state);
         x += 80;
       }
-      if (!isnan(id(nas_disk2_temp).state)) {
+      if (!isnan(id(disk2_temp).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(nas_disk2_temp).state);
+        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(disk2_temp).state);
       }
       y += 45;
 
@@ -341,9 +341,9 @@ display:
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fW", id(cmpower2_power).state);
         x += 80;
       }
-      if (!isnan(id(cmpower2_energy).state)) {
+      if (!isnan(id(cm2_total_power).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F1A58");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fkWh", id(cmpower2_energy).state / 1000.0f);
+        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fkWh", id(cm2_total_power).state / 1000.0f);
       }
       y += 45;
 
