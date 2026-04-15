@@ -175,18 +175,17 @@ display:
       // === 第1行：日期 + 星期 ===
       int y = 20;
       auto now = id(rtc_time).now();
+      
+      // 获取星期（0=Sunday, 6=Saturday）
+      int wday = std::stoi(now.strftime("%w"));
       const char* weekdays[] = {"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"};
-      int wday = std::min(6, std::max(0, (int)now.day_of_week));
       char date_week_str[50];
-      snprintf(date_week_str, sizeof(date_week_str), "%04d年%02d月%02d日 %s",
-               now.year, now.month, now.day, weekdays[wday]);
-      it.print(WIDTH / 2, y, id(cn_font), TextAlign::TOP_CENTER, date_week_str);
+      snprintf(date_week_str, sizeof(date_week_str), "%s %s", now.strftime("%Y年%m月%d日").c_str(), weekdays[wday]);
+      it.print(it.get_width() / 2, y, id(cn_font), TextAlign::TOP_CENTER, date_week_str);
       y += 50;
 
       // === 第2行：大字时间 ===
-      char time_str[16];
-      sprintf(time_str, "%02d:%02d", now.hour, now.minute);
-      it.print(WIDTH / 2, y, id(big_font), TextAlign::TOP_CENTER, time_str);
+      it.print(it.get_width() / 2, y, id(big_font), TextAlign::TOP_CENTER, now.strftime("%H:%M").c_str());
       y += 80;
 
       // === 天气区 ===
@@ -234,7 +233,7 @@ display:
       }
 
       // === 客厅区 ===
-      draw_hline(y);50+45+45+45+
+      draw_hline(y);
       y += 5;
       it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC");
       it.print(50, y, id(cn_font), TextAlign::TOP_LEFT, "客厅");
