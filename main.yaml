@@ -145,7 +145,7 @@ display:
       const int HEIGHT = it.get_height(); // 960
 
       auto draw_hline = [&](int y) {
-        it.line(0, y, WIDTH, y);
+        it.line(5, y, WIDTH - 5, y);
       };
 
       // === 电池图标（右上角）===
@@ -200,12 +200,12 @@ display:
       if (!isnan(id(xiamen_temp).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(xiamen_temp).state);
-        x += 80;
+        x += 120;
       }
       if (!isnan(id(xiamen_humi).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F058E");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.0f%%", id(xiamen_humi).state);
-        x += 80;
+        x += 120;
       }
       if (!isnan(id(xiamen_pressure).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0F85");
@@ -218,7 +218,7 @@ display:
       if (!isnan(id(xiamen_windspeed).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F059D");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fkm/h", id(xiamen_windspeed).state);
-        x += 80;
+        x += 120;
       }
       if (!isnan(id(xiamen_pm25).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0BAC");
@@ -229,7 +229,7 @@ display:
       // 天气预报文本（单独一行，左对齐）
       if (!id(xiamen_weather).state.empty()) {
         it.print(50, y, id(cn_font), TextAlign::TOP_LEFT, id(xiamen_weather).state.c_str());
-        y += 45;
+        y += 50;
       }
 
       // === 客厅区 ===
@@ -244,7 +244,7 @@ display:
       if (!isnan(id(xiaomi_temp).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(xiaomi_temp).state);
-        x += 80;
+        x += 120;
       }
       if (!isnan(id(xiaomi_humi).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F058E");
@@ -257,7 +257,7 @@ display:
       if (!isnan(id(zm1_pm25).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0BAC");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.0f", id(zm1_pm25).state);
-        x += 80;
+        x += 120;
       }
       if (!isnan(id(zm1_hcho).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F07E4");
@@ -268,9 +268,9 @@ display:
       // 弱电箱: 功率 + kWh
       x = 50;
       if (!isnan(id(cmpower1_power).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "弱电箱： \U000F140B");
+        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F140B");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fW", id(cmpower1_power).state);
-        x += 80;
+        x += 120;
       }
       if (!isnan(id(cm1_total_power).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F1A58");
@@ -281,9 +281,9 @@ display:
       // NAS: CPU + 内存
       x = 50;
       if (!isnan(id(nas_cpu).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "NAS： \U000F0EE0");
+        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0EE0");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.0f%%", id(nas_cpu).state);
-        x += 80;
+        x += 120;
       }
       if (!isnan(id(nas_mem).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F035B");
@@ -294,9 +294,9 @@ display:
       // 群晖硬盘温度
       x = 50;
       if (!isnan(id(disk1_temp).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "硬盘： \U000F050F");
+        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(disk1_temp).state);
-        x += 80;
+        x += 120;
       }
       if (!isnan(id(disk2_temp).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F");
@@ -316,7 +316,7 @@ display:
       if (!isnan(id(qp_temp).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(qp_temp).state);
-        x += 80;
+        x += 120;
       }
       if (!isnan(id(qp_humi).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F058E");
@@ -327,18 +327,17 @@ display:
       // 空调功率
       x = 50;
       if (!isnan(id(ac2_power).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "空调： \U000F001B");
+        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F001B");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fW", id(ac2_power).state);
-        x += 80;
       }
       y += 45;
 
       // 工作台: 功率 + kWh
       x = 50;
       if (!isnan(id(cmpower2_power).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "工作台： \U000F140B");
+        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F140B");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fW", id(cmpower2_power).state);
-        x += 80;
+        x += 120;
       }
       if (!isnan(id(cm2_total_power).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F1A58");
@@ -356,9 +355,9 @@ display:
       // 冰箱温度
       x = 50;
       if (!isnan(id(icebox_temp01).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "冰箱： \U000F1A71");
+        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F1A71");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(icebox_temp01).state);
-        x += 80;
+        x += 120;
       }
       if (!isnan(id(icebox_temp02).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F1A71");
@@ -378,12 +377,12 @@ display:
       if (!isnan(id(m5paper_temperature).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(m5paper_temperature).state);
-        x += 80;
+        x += 120;
       }
       if (!isnan(id(m5paper_humidity).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F058E");
         it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.0f%%", id(m5paper_humidity).state);
-        x += 80;
+        x += 120;
       }
       if (!isnan(id(m5paper_battery_voltage).state)) {
         it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F1B1E");
