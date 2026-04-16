@@ -5,7 +5,7 @@ substitutions:
 
   # 允许显示的字符集
   allowed_characters: |-
-    一二三四五六七八九十百千万亿年月日星期时间分秒厦门天气温湿度未来小不会下雨大直客厅弱电箱硬盘卧室空调工作台厨房冰你我他好世界开心快乐和总量冷冻藏排插本机功率运行池压流阻·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890³~`!$^()_[]\;:'",<.>?
+    一二三四五六七八九十百千万亿年月日星期时间分秒厦门天气温湿度未来小不会下雨大直客厅弱电箱硬盘卧室空调工作台厨房冰你我他好世界开心快乐和总量冷冻藏排插本机功率运行池压流阻·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890μ³~`!$^()_[]\;:'",<.>?
  
 # ESPHome 核心配置
 esphome:
@@ -66,9 +66,17 @@ font:
       weight: 400                   # 字重：常规（Regular，400）
       italic: false                 # 非斜体
     id: cn_font                     # 字体唯一ID
-    size: 36                        # 字号：36
+    size: 32                        # 字号：36
     glyphs: ${allowed_characters}   # 只加载指定字符
     ignore_missing_glyphs: true     # 忽略字体中缺失的字符，不报错
+  - file:
+      type: gfonts
+      family: "Noto Sans SC"
+      weight: 400
+      italic: false
+    id: title_font
+    size: 36
+    glyphs: ${allowed_characters}
   - file:
       type: gfonts
       family: "Noto Sans SC"
@@ -172,7 +180,7 @@ display:
       const char* weekdays[] = {"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"};
       char date_week_str[50];
       snprintf(date_week_str, sizeof(date_week_str), "%s %s", now.strftime("%Y年%m月%d日").c_str(), weekdays[wday]);
-      it.print(it.get_width() / 2, y, id(cn_font), TextAlign::TOP_CENTER, date_week_str);
+      it.print(it.get_width() / 2, y, id(title_font), TextAlign::TOP_CENTER, date_week_str);
       y += 50;
 
       // === 第2行：大字时间 ===
@@ -183,7 +191,7 @@ display:
       draw_hline(y);
       y += 5;
       it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0590");
-      it.print(50, y, id(cn_font), TextAlign::TOP_LEFT, "厦门天气");
+      it.print(50, y, id(title_font), TextAlign::TOP_LEFT, "厦门天气");
       y += 50;
 
       // 天气数据行1: 温/湿
@@ -216,7 +224,7 @@ display:
       draw_hline(y);
       y += 5;
       it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC");
-      it.print(50, y, id(cn_font), TextAlign::TOP_LEFT, "客厅");
+      it.print(50, y, id(title_font), TextAlign::TOP_LEFT, "客厅");
       y += 50;
 
       // 小米温湿度
@@ -248,10 +256,10 @@ display:
 
       // 群晖硬盘温度
       if (!isnan(id(disk1_temp).state)) {
-        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "DISK1:%.1f℃", id(disk1_temp).state);
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "HDD1:%.1f℃", id(disk1_temp).state);
       }
       if (!isnan(id(disk2_temp).state)) {
-        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "DISK2:%.1f℃", id(disk2_temp).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "HDD2:%.1f℃", id(disk2_temp).state);
       }
       y += 45;
 
@@ -260,7 +268,7 @@ display:
       draw_hline(y);
       y += 5;
       it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F02E3");
-      it.print(50, y, id(cn_font), TextAlign::TOP_LEFT, "卧室");
+      it.print(50, y, id(title_font), TextAlign::TOP_LEFT, "卧室");
       y += 50;
 
       // 青萍温湿度
@@ -286,15 +294,15 @@ display:
       draw_hline(y);
       y += 5;
       it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0290");
-      it.print(50, y, id(cn_font), TextAlign::TOP_LEFT, "厨房");
+      it.print(50, y, id(title_font), TextAlign::TOP_LEFT, "厨房");
       y += 50;
 
       // 冰箱温度
       if (!isnan(id(icebox_temp01).state)) {
-        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "冷藏室:%.1f℃", id(icebox_temp01).state);
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "冷藏:%.1f℃", id(icebox_temp01).state);
       }
       if (!isnan(id(icebox_temp02).state)) {
-        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "冷冻室:%.1f℃", id(icebox_temp02).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "冷冻:%.1f℃", id(icebox_temp02).state);
       }
       y += 45;
 
@@ -303,7 +311,7 @@ display:
       draw_hline(y);
       y += 5;
       it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F011C");
-      it.print(50, y, id(cn_font), TextAlign::TOP_LEFT, "M5Paper");
+      it.print(50, y, id(title_font), TextAlign::TOP_LEFT, "M5Paper");
       y += 50;
 
       // 本机温湿度
