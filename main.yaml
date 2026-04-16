@@ -259,7 +259,7 @@ display:
         it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "CPU:%.0f%%", id(nas_cpu).state);
       }
       if (!isnan(id(nas_mem).state)) {
-        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "内存:%.0f%", id(nas_mem).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "内存:%.0f%%", id(nas_mem).state);
       }
       y += 45;
 
