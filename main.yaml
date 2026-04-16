@@ -259,7 +259,7 @@ display:
         it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "CPU:%.0f%%", id(nas_cpu).state);
       }
       if (!isnan(id(nas_mem).state)) {
-        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "内存:%.0fMB", id(nas_mem).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "内存:%.0f%", id(nas_mem).state);
       }
       y += 45;
 
@@ -447,8 +447,8 @@ sensor:
   - platform: homeassistant
     name: nas mem
     id: nas_mem
-    entity_id: sensor.cnas2010_memory_total_real
-    unit_of_measurement: "MB"
+    entity_id: sensor.cnas2010_memory_usage_real
+    unit_of_measurement: "%"
   - platform: homeassistant
     name: disk1 temperature
     entity_id: sensor.cnas2010_disk_1_temperature
