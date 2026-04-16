@@ -5,7 +5,7 @@ substitutions:
 
   # 允许显示的字符集
   allowed_characters: |-
-    一二三四五六七八九十百千万亿年月日星期时间分秒厦门天气温湿度未来小不会下雨大直客厅弱电箱硬盘卧室空调工作台厨房冰你我他好世界开心快乐和总量冷冻藏排插本机功率运行池压流阻·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
+    一二三四五六七八九十百千万亿年月日星期时间分秒厦门天气温湿度未来小不会下雨大直客厅弱电箱硬盘卧室空调工作台厨房冰你我他好世界开心快乐和总量冷冻藏排插本机功率运行池压流阻·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890³~`!$^()_[]\;:'",<.>?
  
 # ESPHome 核心配置
 esphome:
@@ -101,20 +101,11 @@ font:
       - "\U000F02DC"  # 客厅
       - "\U000F050F"  # 温度
       - "\U000F058E"  # 湿度
-      - "\U000F0F85"  # 气压
       - "\U000F0290"  # 厨房
       - "\U000F1A71"  # 冰箱温度
       - "\U000F02E3"  # 卧室
       - "\U000F140B"  # 闪电
-      - "\U000F1A58"  # 总电量
-      - "\U000F059D"  # 风量
-      - "\U000F001B"  # 空调
-      - "\U000F0EE0"  # CPU
-      - "\U000F035B"  # 内存
-      - "\U000F0BAC"  # PM2.5
-      - "\U000F07E4"  # 甲醛
       - "\U000F011C"  # M5PAPER
-      - "\U000F1B1E"  # 电压
 
 # SPI 总线
 spi:
@@ -135,7 +126,7 @@ display:
     cs_pin: GPIO15                # 片选引脚
     reset_pin: GPIO23             # 复位引脚
     busy_pin: GPIO27              # 忙信号引脚
-    rotation: 90                  # 屏幕旋转角度，0是横向
+    rotation: 270                 # 屏幕旋转角度，0是横向
     reversed: False               # 不反转颜色
     update_interval: never        # 不自动刷新，仅手动更新
     full_update_every: 10         # 每10次更新执行一次全刷
@@ -195,44 +186,33 @@ display:
       it.print(50, y, id(cn_font), TextAlign::TOP_LEFT, "厦门天气");
       y += 50;
 
-      // 天气数据行1: 温/湿/压
-      int x = 50;
+      // 天气数据行1: 温/湿
       if (!isnan(id(xiamen_temp).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(xiamen_temp).state);
-        x += 120;
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "温度:%.1f℃", id(xiamen_temp).state);
       }
       if (!isnan(id(xiamen_humi).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F058E");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.0f%%", id(xiamen_humi).state);
-        x += 120;
-      }
-      if (!isnan(id(xiamen_pressure).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0F85");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.0fhPa", id(xiamen_pressure).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "湿度:%.0f%%", id(xiamen_humi).state);
       }
       y += 45;
 
-      // 天气数据行2: 风速 / PM2.5
-      x = 50;
-      if (!isnan(id(xiamen_windspeed).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F059D");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fkm/h", id(xiamen_windspeed).state);
-        x += 120;
+      // 天气数据行2: 气压/PM2.5
+      if (!isnan(id(xiamen_pressure).state)) {
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "气压:%.0fhPa", id(xiamen_pressure).state);
       }
       if (!isnan(id(xiamen_pm25).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0BAC");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.0f", id(xiamen_pm25).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "PM2.5:%.0fμg/m³", id(xiamen_pm25).state);
       }
       y += 45;
 
-      // 天气预报文本（单独一行，左对齐）
+      // 天气预报文本
       if (!id(xiamen_weather).state.empty()) {
-        it.print(50, y, id(cn_font), TextAlign::TOP_LEFT, id(xiamen_weather).state.c_str());
-        y += 50;
+        it.print(50, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F196F");
+        it.print(90, y, id(cn_font), TextAlign::TOP_LEFT, id(xiamen_weather).state.c_str());
+        y += 45;
       }
 
       // === 客厅区 ===
+      y += 5;
       draw_hline(y);
       y += 5;
       it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC");
@@ -240,71 +220,43 @@ display:
       y += 50;
 
       // 小米温湿度
-      x = 50;
       if (!isnan(id(xiaomi_temp).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(xiaomi_temp).state);
-        x += 120;
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "温度:%.1f℃", id(xiaomi_temp).state);
       }
       if (!isnan(id(xiaomi_humi).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F058E");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.0f%%", id(xiaomi_humi).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "湿度:%.0f%%", id(xiaomi_humi).state);
       }
       y += 45;
 
-      // ZM1: PM2.5 + HCHO
-      x = 50;
-      if (!isnan(id(zm1_pm25).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0BAC");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.0f", id(zm1_pm25).state);
-        x += 120;
-      }
-      if (!isnan(id(zm1_hcho).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F07E4");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.2f", id(zm1_hcho).state);
-      }
-      y += 45;
-
-      // 弱电箱: 功率 + kWh
-      x = 50;
+      // 弱电箱: 功率 + 电量
       if (!isnan(id(cmpower1_power).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F140B");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fW", id(cmpower1_power).state);
-        x += 120;
+        it.printf(5, y, id(cn_font), TextAlign::TOP_LEFT, "功率:%.1fW", id(cmpower1_power).state);
       }
       if (!isnan(id(cm1_total_power).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F1A58");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fkWh", id(cm1_total_power).state / 1000.0f);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "电量:%.1fkWh", id(cm1_total_power).state / 1000.0f);
       }
       y += 45;
 
       // NAS: CPU + 内存
-      x = 50;
       if (!isnan(id(nas_cpu).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0EE0");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.0f%%", id(nas_cpu).state);
-        x += 120;
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "CPU:%.0f%%", id(nas_cpu).state);
       }
       if (!isnan(id(nas_mem).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F035B");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.0fMB", id(nas_mem).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "内存:%.0fMB", id(nas_mem).state);
       }
       y += 45;
 
       // 群晖硬盘温度
-      x = 50;
       if (!isnan(id(disk1_temp).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(disk1_temp).state);
-        x += 120;
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "DISK1:%.1f℃", id(disk1_temp).state);
       }
       if (!isnan(id(disk2_temp).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(disk2_temp).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "DISK2:%.1f℃", id(disk2_temp).state);
       }
       y += 45;
 
       // === 卧室区 ===
+      y += 5;
       draw_hline(y);
       y += 5;
       it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F02E3");
@@ -312,40 +264,25 @@ display:
       y += 50;
 
       // 青萍温湿度
-      x = 50;
       if (!isnan(id(qp_temp).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(qp_temp).state);
-        x += 120;
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "温度:%.1f℃", id(qp_temp).state);
       }
       if (!isnan(id(qp_humi).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F058E");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.0f%%", id(qp_humi).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "湿度:%.0f%%", id(qp_humi).state);
       }
       y += 45;
 
-      // 空调功率
-      x = 50;
-      if (!isnan(id(ac2_power).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F001B");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fW", id(ac2_power).state);
-      }
-      y += 45;
-
-      // 工作台: 功率 + kWh
-      x = 50;
+      // 工作台: 功率 + 电量
       if (!isnan(id(cmpower2_power).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F140B");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fW", id(cmpower2_power).state);
-        x += 120;
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "功率:%.1fW", id(cmpower2_power).state);
       }
       if (!isnan(id(cm2_total_power).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F1A58");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1fkWh", id(cm2_total_power).state / 1000.0f);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "电量:%.1fkWh", id(cm2_total_power).state / 1000.0f);
       }
       y += 45;
 
       // === 厨房区 ===
+      y += 5;
       draw_hline(y);
       y += 5;
       it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0290");
@@ -353,40 +290,34 @@ display:
       y += 50;
 
       // 冰箱温度
-      x = 50;
       if (!isnan(id(icebox_temp01).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F1A71");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(icebox_temp01).state);
-        x += 120;
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "冷藏室:%.1f℃", id(icebox_temp01).state);
       }
       if (!isnan(id(icebox_temp02).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F1A71");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(icebox_temp02).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "冷冻室:%.1f℃", id(icebox_temp02).state);
       }
       y += 45;
 
       // === 本机区 ===
+      y += 5;
       draw_hline(y);
       y += 5;
       it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F011C");
       it.print(50, y, id(cn_font), TextAlign::TOP_LEFT, "M5Paper");
       y += 50;
 
-      // 本机温湿度 + 电压
-      x = 50;
+      // 本机温湿度
       if (!isnan(id(m5paper_temperature).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F050F");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.1f℃", id(m5paper_temperature).state);
-        x += 120;
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "温度:%.1f℃", id(m5paper_temperature).state);
       }
       if (!isnan(id(m5paper_humidity).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F058E");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.0f%%", id(m5paper_humidity).state);
-        x += 120;
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "湿度:%.0f%%", id(m5paper_humidity).state);
       }
+      y += 45;
+
+      // 电池电压
       if (!isnan(id(m5paper_battery_voltage).state)) {
-        it.print(x, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F1B1E");
-        it.printf(x + 40, y, id(cn_font), TextAlign::TOP_LEFT, "%.2fV", id(m5paper_battery_voltage).state);
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "电压:%.2fV", id(m5paper_battery_voltage).state);
       }
 
 # 重启开关
@@ -492,26 +423,6 @@ sensor:
     id: qp_humi
     entity_id: sensor.cgllc_cn_blt_3_1mitqg1roc800_dove_relative_humidity_p_2_2
 
-  # ZM1
-  - platform: homeassistant
-    name: zm1 temperature
-    entity_id: sensor.zm1_b0f89324aed7_temperature
-    id: zm1_temp
-    unit_of_measurement: "°C"
-  - platform: homeassistant
-    name: zm1 humidity
-    id: zm1_humi
-    entity_id: sensor.zm1_b0f89324aed7_humidity
-  - platform: homeassistant
-    name: zm1 pm25
-    id: zm1_pm25
-    entity_id: sensor.zm1_b0f89324aed7_pm25
-  - platform: homeassistant
-    name: zm1 hcho
-    id: zm1_hcho
-    entity_id: sensor.zm1_b0f89324aed7_hcho
-    unit_of_measurement: "mg/m3"
-
   # 群晖
   - platform: homeassistant
     name: nas temperature
@@ -573,13 +484,6 @@ sensor:
     entity_id: sensor.cmpower_w1_26982d_29_zong_dian_liang
     id: cm2_total_power
     unit_of_measurement: "Wh"
-
-  # 次卧空调功率
-  - platform: homeassistant
-    name: ac2 power
-    entity_id: sensor.lumi_cn_333988242_mcn02_electric_power_p_5_1
-    id: ac2_power
-    unit_of_measurement: "W"
 
 # 文本传感器
 text_sensor:
