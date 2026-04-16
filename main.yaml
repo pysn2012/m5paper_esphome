@@ -190,7 +190,7 @@ display:
       // === 天气区 ===
       draw_hline(y);
       y += 5;
-      it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0590");
+      it.print(10, y + 8, id(icons_font), TextAlign::TOP_LEFT, "\U000F0590");
       it.print(50, y, id(title_font), TextAlign::TOP_LEFT, "厦门天气");
       y += 50;
 
@@ -214,7 +214,7 @@ display:
 
       // 天气预报文本
       if (!id(xiamen_weather).state.empty()) {
-        it.print(50, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F196F");
+        it.print(50, y + 5, id(icons_font), TextAlign::TOP_LEFT, "\U000F196F");
         it.print(90, y, id(cn_font), TextAlign::TOP_LEFT, id(xiamen_weather).state.c_str());
         y += 45;
       }
@@ -223,7 +223,7 @@ display:
       y += 5;
       draw_hline(y);
       y += 5;
-      it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC");
+      it.print(10, y + 8, id(icons_font), TextAlign::TOP_LEFT, "\U000F02DC");
       it.print(50, y, id(title_font), TextAlign::TOP_LEFT, "客厅");
       y += 50;
 
@@ -236,9 +236,18 @@ display:
       }
       y += 45;
 
+      // ZM1: PM2.5 + HCHO
+      if (!isnan(id(zm1_pm25).state)) {
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "%.0fμg/m³", id(zm1_pm25).state);
+      }
+      if (!isnan(id(zm1_hcho).state)) {
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "%.2fmg/m³", id(zm1_hcho).state);
+      }
+      y += 45;
+
       // 弱电箱: 功率 + 电量
       if (!isnan(id(cmpower1_power).state)) {
-        it.printf(5, y, id(cn_font), TextAlign::TOP_LEFT, "功率:%.1fW", id(cmpower1_power).state);
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "功率:%.1fW", id(cmpower1_power).state);
       }
       if (!isnan(id(cm1_total_power).state)) {
         it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "电量:%.1fkWh", id(cm1_total_power).state / 1000.0f);
@@ -267,7 +276,7 @@ display:
       y += 5;
       draw_hline(y);
       y += 5;
-      it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F02E3");
+      it.print(10, y + 8, id(icons_font), TextAlign::TOP_LEFT, "\U000F02E3");
       it.print(50, y, id(title_font), TextAlign::TOP_LEFT, "卧室");
       y += 50;
 
@@ -289,28 +298,11 @@ display:
       }
       y += 45;
 
-      // === 厨房区 ===
-      y += 5;
-      draw_hline(y);
-      y += 5;
-      it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F0290");
-      it.print(50, y, id(title_font), TextAlign::TOP_LEFT, "厨房");
-      y += 50;
-
-      // 冰箱温度
-      if (!isnan(id(icebox_temp01).state)) {
-        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "冷藏:%.1f℃", id(icebox_temp01).state);
-      }
-      if (!isnan(id(icebox_temp02).state)) {
-        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "冷冻:%.1f℃", id(icebox_temp02).state);
-      }
-      y += 45;
-
       // === 本机区 ===
       y += 5;
       draw_hline(y);
       y += 5;
-      it.print(10, y, id(icons_font), TextAlign::TOP_LEFT, "\U000F011C");
+      it.print(10, y + 8, id(icons_font), TextAlign::TOP_LEFT, "\U000F011C");
       it.print(50, y, id(title_font), TextAlign::TOP_LEFT, "M5Paper");
       y += 50;
 
@@ -431,6 +423,17 @@ sensor:
     id: qp_humi
     entity_id: sensor.cgllc_cn_blt_3_1mitqg1roc800_dove_relative_humidity_p_2_2
 
+  # ZM1
+  - platform: homeassistant
+    name: zm1 pm25
+    id: zm1_pm25
+    entity_id: sensor.zm1_b0f89324aed7_pm25
+  - platform: homeassistant
+    name: zm1 hcho
+    id: zm1_hcho
+    entity_id: sensor.zm1_b0f89324aed7_hcho
+    unit_of_measurement: "mg/m3"
+
   # 群晖
   - platform: homeassistant
     name: nas temperature
@@ -455,18 +458,6 @@ sensor:
     name: disk2 temperature
     entity_id: sensor.cnas2010_disk_2_temperature
     id: disk2_temp
-    unit_of_measurement: "°C"
-
-  # 冰箱温度
-  - platform: homeassistant
-    name: icebox temp01
-    entity_id: sensor.viomi_cn_246891354_u37_temperature_p_3_1
-    id: icebox_temp01
-    unit_of_measurement: "°C"
-  - platform: homeassistant
-    name: icebox temp02
-    entity_id: sensor.viomi_cn_246891354_u37_temperature_p_4_1
-    id: icebox_temp02
     unit_of_measurement: "°C"
 
   # NAS排插功率
