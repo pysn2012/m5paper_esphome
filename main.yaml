@@ -5,7 +5,7 @@ substitutions:
 
   # 允许显示的字符集
   allowed_characters: |-
-    一二三四五六七八九十百千万亿年月日星期时间分秒厦门天气温湿度未来小不会下雨大直客厅弱电箱内存硬盘卧室空调工作台厨房冰你我他好世界开心快乐和总量冷冻藏排插本机功率运行池压流阻·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890μ³~`!$^()_[]\;:'",<.>?
+    一二三四五六七八九十百千万亿年月日星期时间分秒厦门天气温湿度未来小不会下雨大直客厅甲醛弱电箱内存硬盘卧室空调工作台厨房冰你我他好世界开心快乐和总量冷冻藏排插本机功率运行池压流阻·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890μ³~`!$^()_[]\;:'",<.>?
  
 # ESPHome 核心配置
 esphome:
@@ -232,16 +232,16 @@ display:
         it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "温度:%.1f℃", id(xiaomi_temp).state);
       }
       if (!isnan(id(xiaomi_humi).state)) {
-        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "湿度:%.0f%%", id(xiaomi_humi).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "湿度:%.1f%%", id(xiaomi_humi).state);
       }
       y += 45;
 
       // ZM1: PM2.5 + HCHO
       if (!isnan(id(zm1_pm25).state)) {
-        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "%.0fμg/m³", id(zm1_pm25).state);
+        it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "PM2.5:%.0fμg/m³", id(zm1_pm25).state);
       }
       if (!isnan(id(zm1_hcho).state)) {
-        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "%.2fmg/m³", id(zm1_hcho).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "甲醛:%.2fmg/m³", id(zm1_hcho).state);
       }
       y += 45;
 
@@ -285,7 +285,7 @@ display:
         it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "温度:%.1f℃", id(qp_temp).state);
       }
       if (!isnan(id(qp_humi).state)) {
-        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "湿度:%.0f%%", id(qp_humi).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "湿度:%.1f%%", id(qp_humi).state);
       }
       y += 45;
 
@@ -311,7 +311,7 @@ display:
         it.printf(50, y, id(cn_font), TextAlign::TOP_LEFT, "温度:%.1f℃", id(m5paper_temperature).state);
       }
       if (!isnan(id(m5paper_humidity).state)) {
-        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "湿度:%.0f%%", id(m5paper_humidity).state);
+        it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "湿度:%.1f%%", id(m5paper_humidity).state);
       }
       y += 45;
 
