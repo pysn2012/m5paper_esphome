@@ -216,7 +216,7 @@ display:
 
       // 天气预报文本
       if (!id(xiamen_weather).state.empty()) {
-        it.print(50, y + 5, id(icons_small), TextAlign::TOP_LEFT, "\U000F00E6");
+        it.print(50, y + 8, id(icons_small), TextAlign::TOP_LEFT, "\U000F00E6");
         it.print(80, y, id(cn_font), TextAlign::TOP_LEFT, id(xiamen_weather).state.c_str());
         y += 45;
       }
@@ -249,7 +249,7 @@ display:
 
       // 弱电箱: 功率 + 电量
       if (!isnan(id(cmpower1_power).state)) {
-        it.print(50, y + 5, id(icons_small), TextAlign::TOP_LEFT, "\U000F0905");
+        it.print(50, y + 8, id(icons_small), TextAlign::TOP_LEFT, "\U000F0905");
         it.printf(80, y, id(cn_font), TextAlign::TOP_LEFT, "功率:%.0fW", id(cmpower1_power).state);
       }
       if (!isnan(id(cm1_total_power).state)) {
@@ -259,7 +259,7 @@ display:
 
       // NAS: CPU + 内存
       if (!isnan(id(nas_cpu).state)) {
-        it.print(50, y + 5, id(icons_small), TextAlign::TOP_LEFT, "\U000F08F3");
+        it.print(50, y + 8, id(icons_small), TextAlign::TOP_LEFT, "\U000F08F3");
         it.printf(80, y, id(cn_font), TextAlign::TOP_LEFT, "CPU:%.0f%%", id(nas_cpu).state);
       }
       if (!isnan(id(nas_mem).state)) {
@@ -295,7 +295,7 @@ display:
 
       // 工作台: 功率 + 电量
       if (!isnan(id(cmpower2_power).state)) {
-        it.print(50, y + 5, id(icons_small), TextAlign::TOP_LEFT, "\U000F0905");
+        it.print(50, y + 8, id(icons_small), TextAlign::TOP_LEFT, "\U000F0905");
         it.printf(80, y, id(cn_font), TextAlign::TOP_LEFT, "功率:%.0fW", id(cmpower2_power).state);
       }
       if (!isnan(id(cm2_total_power).state)) {
