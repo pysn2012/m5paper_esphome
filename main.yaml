@@ -106,7 +106,7 @@ font:
       - "\U000F011C"  # M5PAPER
   - file: "fonts/materialdesignicons-webfont.ttf"
     id: icons_small
-    size: 28
+    size: 32
     glyphs:
       - "\U000F00E6"  # 广播
       - "\U000F050F"  # 温度
@@ -217,7 +217,7 @@ display:
       // 天气预报文本
       if (!id(xiamen_weather).state.empty()) {
         it.print(50, y + 8, id(icons_small), TextAlign::TOP_LEFT, "\U000F00E6");
-        it.print(80, y, id(cn_font), TextAlign::TOP_LEFT, id(xiamen_weather).state.c_str());
+        it.print(90, y, id(cn_font), TextAlign::TOP_LEFT, id(xiamen_weather).state.c_str());
         y += 45;
       }
 
@@ -250,7 +250,7 @@ display:
       // 弱电箱: 功率 + 电量
       if (!isnan(id(cmpower1_power).state)) {
         it.print(50, y + 8, id(icons_small), TextAlign::TOP_LEFT, "\U000F0905");
-        it.printf(80, y, id(cn_font), TextAlign::TOP_LEFT, "功率:%.0fW", id(cmpower1_power).state);
+        it.printf(90, y, id(cn_font), TextAlign::TOP_LEFT, "功率:%.0fW", id(cmpower1_power).state);
       }
       if (!isnan(id(cm1_total_power).state)) {
         it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "电量:%.0fkWh", id(cm1_total_power).state / 1000.0f);
@@ -260,7 +260,7 @@ display:
       // NAS: CPU + 内存
       if (!isnan(id(nas_cpu).state)) {
         it.print(50, y + 8, id(icons_small), TextAlign::TOP_LEFT, "\U000F08F3");
-        it.printf(80, y, id(cn_font), TextAlign::TOP_LEFT, "CPU:%.0f%%", id(nas_cpu).state);
+        it.printf(90, y, id(cn_font), TextAlign::TOP_LEFT, "CPU:%.0f%%", id(nas_cpu).state);
       }
       if (!isnan(id(nas_mem).state)) {
         it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "内存:%.0f%%", id(nas_mem).state);
@@ -269,7 +269,7 @@ display:
 
       // 群晖硬盘温度
       if (!isnan(id(disk1_temp).state)) {
-        it.printf(80, y, id(cn_font), TextAlign::TOP_LEFT, "盘1:%.0f℃", id(disk1_temp).state);
+        it.printf(90, y, id(cn_font), TextAlign::TOP_LEFT, "盘1:%.0f℃", id(disk1_temp).state);
       }
       if (!isnan(id(disk2_temp).state)) {
         it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "盘2:%.0f℃", id(disk2_temp).state);
@@ -296,7 +296,7 @@ display:
       // 工作台: 功率 + 电量
       if (!isnan(id(cmpower2_power).state)) {
         it.print(50, y + 8, id(icons_small), TextAlign::TOP_LEFT, "\U000F0905");
-        it.printf(80, y, id(cn_font), TextAlign::TOP_LEFT, "功率:%.0fW", id(cmpower2_power).state);
+        it.printf(90, y, id(cn_font), TextAlign::TOP_LEFT, "功率:%.0fW", id(cmpower2_power).state);
       }
       if (!isnan(id(cm2_total_power).state)) {
         it.printf(290, y, id(cn_font), TextAlign::TOP_LEFT, "电量:%.0fkWh", id(cm2_total_power).state / 1000.0f);
