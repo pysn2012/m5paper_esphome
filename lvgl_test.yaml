@@ -99,31 +99,25 @@ display:
 # 触摸屏：GT911 电容触摸芯片
 touchscreen:
   - platform: gt911
-    display: m5paper_display      # 关联到显示屏
-    id: gt911_touchscreen         # 触摸屏 ID
+    display: m5paper_display
+    id: gt911_touchscreen
     transform:
       swap_xy: true
       mirror_x: false
       mirror_y: true
     on_touch:
       then:
-        - lambda: |-
-            // 获取触摸坐标（已变换）
-            int x = touch.x;
-            int y = touch.y;
+        - if:
+            condition:
+              lambda: return touch.x < 180 && touch.y >= 80 && touch.y <= 160;
+            then:
+              - lvgl.page.show: welcome_page
 
-            const int menu_width = 180;
-
-            // 只响应左侧菜单区域
-            if (x < menu_width) {
-              if (y >= 80 && y <= 160) {
-                // 点击"欢迎"区域
-                lvgl.page.show: welcome_page
-              } else if (y >= 180 && y <= 260) {
-                // 点击"环境"区域
-                lvgl.page.show: environment_page
-              }
-            }
+        - if:
+            condition:
+              lambda: return touch.x < 180 && touch.y >= 180 && touch.y <= 260;
+            then:
+              - lvgl.page.show: environment_page
 
 # 时间同步配置
 time:
