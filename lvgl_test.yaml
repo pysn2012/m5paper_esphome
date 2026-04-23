@@ -64,17 +64,6 @@ i2c:
   scl: GPIO22
 
 # --------------------------
-# LVGL 核心配置（墨水屏专用）
-# --------------------------
-lvgl:
-  displays:
-    - m5paper_display
-  touchscreens:
-    - touchscreen_id: gt911_touchscreen
-  buffer_size: 100%        # 墨水屏全屏缓冲
-  rotation: 0
-
-# --------------------------
 # 字体
 # --------------------------
 font:
@@ -124,123 +113,6 @@ touchscreen:
       swap_xy: true
       mirror_x: false
       mirror_y: true
-
-# --------------------------
-# LVGL UI 界面（2 页面布局）
-# --------------------------
-lvgl_pages:
-  - id: page_welcome
-    layout: horizontal
-    widgets:
-      # 左侧菜单容器
-      - container:
-          width: 180
-          height: 100%
-          bg_color: 0x000000
-          bg_opa: 5
-          widgets:
-            - button:
-                id: btn_welcome
-                align: top_center
-                y: 100
-                width: 160
-                height: 70
-                on_click:
-                  - lvgl.page.show: page_welcome
-                widgets:
-                  - label:
-                      text: "欢迎"
-                      align: center
-                      font: cn_font
-            - button:
-                id: btn_env
-                align: top_center
-                y: 200
-                width: 160
-                height: 70
-                on_click:
-                  - lvgl.page.show: page_env
-                widgets:
-                  - label:
-                      text: "环境"
-                      align: center
-                      font: cn_font
-
-      # 右侧内容区
-      - container:
-          width: 100%
-          height: 100%
-          pad_left: 10
-          widgets:
-            - label:
-                text: "你好，M5Paper！"
-                align: top_center
-                y: 50
-                font: big_font
-            - label:
-                id: label_battery
-                align: top_center
-                y: 150
-                font: cn_font
-            - label:
-                id: label_time
-                align: top_center
-                y: 220
-                font: cn_font
-
-  - id: page_env
-    layout: horizontal
-    widgets:
-      # 左侧菜单（和欢迎页完全一样）
-      - container:
-          width: 180
-          height: 100%
-          bg_color: 0x000000
-          bg_opa: 5
-          widgets:
-            - button:
-                id: btn_welcome2
-                align: top_center
-                y: 100
-                width: 160
-                height: 70
-                on_click:
-                  - lvgl.page.show: page_welcome
-                widgets:
-                  - label:
-                      text: "欢迎"
-                      align: center
-                      font: cn_font
-            - button:
-                id: btn_env2
-                align: top_center
-                y: 200
-                width: 160
-                height: 70
-                on_click:
-                  - lvgl.page.show: page_env
-                widgets:
-                  - label:
-                      text: "环境"
-                      align: center
-                      font: cn_font
-
-      # 右侧环境信息
-      - container:
-          width: 100%
-          height: 100%
-          pad_left: 10
-          widgets:
-            - label:
-                text: "环境信息"
-                align: top_center
-                y: 80
-                font: big_font
-            - label:
-                id: label_th
-                align: top_center
-                y: 180
-                font: cn_font
 
 # --------------------------
 # 时间
@@ -297,6 +169,129 @@ sensor:
       constexpr float max_v = 4.15f;
       float pct = (id(m5paper_battery_voltage).state - min_v) / (max_v - min_v) * 100;
       return clamp(pct, 0.0f, 100.0f);
+
+# --------------------------
+# LVGL 核心配置（正确写法！）
+# --------------------------
+lvgl:
+  displays:
+    - m5paper_display
+  touchscreens:
+    - touchscreen_id: gt911_touchscreen
+  buffer_size: 100%
+  rotation: 0
+  auto_clear_enabled: false
+
+  # 所有页面都写在 lvgl: 下面的 pages: 里
+  pages:
+    - id: page_welcome
+      layout: horizontal
+      widgets:
+        # 左侧菜单容器
+        - container:
+            width: 180
+            height: 100%
+            bg_color: 0x000000
+            bg_opa: 5
+            widgets:
+              - button:
+                  id: btn_welcome
+                  align: top_center
+                  y: 100
+                  width: 160
+                  height: 70
+                  on_click:
+                    - lvgl.page.show: page_welcome
+                  widgets:
+                    - label:
+                        text: "欢迎"
+                        align: center
+                        font: cn_font
+              - button:
+                  id: btn_env
+                  align: top_center
+                  y: 200
+                  width: 160
+                  height: 70
+                  on_click:
+                    - lvgl.page.show: page_env
+                  widgets:
+                    - label:
+                        text: "环境"
+                        align: center
+                        font: cn_font
+
+        # 右侧内容区
+        - container:
+            width: 100%
+            height: 100%
+            pad_left: 10
+            widgets:
+              - label:
+                  text: "你好，M5Paper！"
+                  align: top_center
+                  y: 50
+                  font: big_font
+              - label:
+                  id: label_battery
+                  align: top_center
+                  y: 150
+                  font: cn_font
+              - label:
+                  id: label_time
+                  align: top_center
+                  y: 220
+                  font: cn_font
+
+    - id: page_env
+      layout: horizontal
+      widgets:
+        - container:
+            width: 180
+            height: 100%
+            bg_color: 0x000000
+            bg_opa: 5
+            widgets:
+              - button:
+                  align: top_center
+                  y: 100
+                  width: 160
+                  height: 70
+                  on_click:
+                    - lvgl.page.show: page_welcome
+                  widgets:
+                    - label:
+                        text: "欢迎"
+                        align: center
+                        font: cn_font
+              - button:
+                  align: top_center
+                  y: 200
+                  width: 160
+                  height: 70
+                  on_click:
+                    - lvgl.page.show: page_env
+                  widgets:
+                    - label:
+                        text: "环境"
+                        align: center
+                        font: cn_font
+
+        - container:
+            width: 100%
+            height: 100%
+            pad_left: 10
+            widgets:
+              - label:
+                  text: "环境信息"
+                  align: top_center
+                  y: 80
+                  font: big_font
+              - label:
+                  id: label_th
+                  align: top_center
+                  y: 180
+                  font: cn_font
 
 # --------------------------
 # 自动刷新 LVGL 标签内容
