@@ -178,41 +178,29 @@ lvgl:
     - gt911_touchscreen
   update_when_display_idle: true
   default_font: cn_font
-  bg_color: 0xFFFFFF  # 全局背景：白色
-
-  bottom_layer:
-    bg_color: 0xFFFFFF
 
   pages:
     # ===== 页面1：欢迎 =====
     - id: welcome_page
       widgets:
-        # 左侧菜单容器（180px 宽）
-        - container:
-            x: 0
-            y: 0
-            width: 180
-            height: 540
-            bg_color: 0xFFFFFF
-            border_width: 1
-            border_color: 0xDDDDDD
-            widgets:
-              - label:
-                  x: 90
-                  y: 100
-                  text: "欢迎"
-                  text_color: 0x000000
-                  align: TOP_MID
-              - label:
-                  x: 90
-                  y: 200
-                  text: "环境"
-                  text_color: 0x000000
-                  align: TOP_MID
-
-        # 右侧内容区
+        # 左侧菜单：直接放 label，不套 container（避免容器背景干扰）
         - label:
-            x: 570
+            x: 60       # 距左 60px，确保完整显示“欢迎”二字（字体宽约80-100px）
+            y: 100
+            text: "欢迎"
+            text_color: 0x000000   # 必须黑字
+            align: TOP_LEFT        # 左对齐更安全
+
+        - label:
+            x: 60
+            y: 200
+            text: "环境"
+            text_color: 0x000000
+            align: TOP_LEFT
+
+        # 右侧内容：居中于右侧区域（180 ~ 960）
+        - label:
+            x: 570      # (180 + 960) / 2 = 570
             y: 50
             text: "你好，M5Paper！"
             text_color: 0x000000
@@ -224,15 +212,12 @@ lvgl:
             x: 570
             y: 150
             text: !lambda |-
-              float v_bat = id(m5paper_battery_voltage).state;
-              if (!isnan(v_bat)) {
-                constexpr float min_v = 3.52f, max_v = 4.15f;
-                float pct = (v_bat - min_v) / (max_v - min_v) * 100.0f;
-                pct = clamp(pct, 0.0f, 100.0f);
-                return to_string((int)pct) + "%";
-              } else {
-                return "--%";
+              float v = id(m5paper_battery_voltage).state;
+              if (!isnan(v)) {
+                float pct = (v - 3.52f) / (4.15f - 3.52f) * 100.0f;
+                return to_string((int)clamp(pct, 0.0f, 100.0f)) + "%";
               }
+              return "--%";
             text_color: 0x000000
             align: TOP_MID
 
@@ -249,27 +234,19 @@ lvgl:
     - id: environment_page
       widgets:
         # 左侧菜单（同上）
-        - container:
-            x: 0
-            y: 0
-            width: 180
-            height: 540
-            bg_color: 0xFFFFFF
-            border_width: 1
-            border_color: 0xDDDDDD
-            widgets:
-              - label:
-                  x: 90
-                  y: 100
-                  text: "欢迎"
-                  text_color: 0x000000
-                  align: TOP_MID
-              - label:
-                  x: 90
-                  y: 200
-                  text: "环境"
-                  text_color: 0x000000
-                  align: TOP_MID
+        - label:
+            x: 60
+            y: 100
+            text: "欢迎"
+            text_color: 0x000000
+            align: TOP_LEFT
+
+        - label:
+            x: 60
+            y: 200
+            text: "环境"
+            text_color: 0x000000
+            align: TOP_LEFT
 
         - label:
             x: 570
@@ -284,13 +261,13 @@ lvgl:
             x: 570
             y: 180
             text: !lambda |-
-              if (!isnan(id(m5paper_temperature).state) && !isnan(id(m5paper_humidity).state)) {
-                char buffer[60];
-                snprintf(buffer, sizeof(buffer), "温度：%.1f℃  湿度：%.1f%%",
-                         id(m5paper_temperature).state, id(m5paper_humidity).state);
-                return std::string(buffer);
-              } else {
-                return "温湿度：--";
+              auto t = id(m5paper_temperature).state;
+              auto h = id(m5paper_humidity).state;
+              if (!isnan(t) && !isnan(h)) {
+                char buf[50];
+                snprintf(buf, sizeof(buf), "温度：%.1f℃\n湿度：%.1f%%", t, h);
+                return std::string(buf);
               }
+              return "温湿度：--";
             text_color: 0x000000
             align: TOP_MID
