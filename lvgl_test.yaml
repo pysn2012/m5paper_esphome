@@ -2,22 +2,14 @@
 substitutions:
   device_name: m5paper
   friendly_name: M5paper esphome
-
-  # 允许显示的字符集
   allowed_characters: |-
     一二三四五六七八九十百千万亿温湿度时间分秒你好世界我他和开心快乐电量欢迎环境信息·！@#￥%…&*（）—+-=、|【{}】；：‘“”，《。》/？℃℉￡ abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890~`!$^()_[]\;:'",<.>?
 
-# ESPHome 核心配置
 esphome:
   name: ${device_name}
   friendly_name: ${friendly_name}
-  min_version: 2025.5.0               # 要求的最低 ESPHome 版本
-  name_add_mac_suffix: true           # 在设备名后附加 MAC 地址，避免多设备冲突
-  on_boot:
-    - priority: 600                   # 高优先级
-      then:
-        - bm8563.read_time:
-            id: rtc_time              # 从 RTC 读取当前时间
+  min_version: 2025.5.0
+  name_add_mac_suffix: true
 
 esp32:
   board: m5stack_paper
@@ -25,48 +17,41 @@ esp32:
   framework:
     type: esp-idf
     advanced:
-      minimum_chip_revision: '3.1'    # 对应 ESP32-D0WD-V3
+      minimum_chip_revision: '3.1'
 
-# 外部自定义组件（本地路径）
 external_components:
   - source:
       type: local
-      path: components/           # 自定义组件目录（相对于本 YAML 文件）
+      path: components/
 
-# 系统服务：日志、PSRAM、API、OTA
-logger:                           # 启用串口日志输出（用于调试）
-
-psram:                            # 启用 PSRAM（M5Paper 有外置 PSRAM，必须开启）
-
-api:                              # 启用 Home Assistant API（支持远程控制和状态同步）
+logger:
+psram:
+api:
 
 ota:
   - platform: esphome
 
-# WiFi 设置
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  power_save_mode: "HIGH"           # 深度节能（功耗低，稳定性差）
+  power_save_mode: "HIGH"
 
-# 全局变量
 globals:
   - id: current_page
     type: int
     restore_value: no
     initial_value: '0'
 
-# 字体配置
 font:
   - file:
-      type: gfonts                  # 字体来源：谷歌字体
-      family: "Noto Sans SC"        # 字体家族：思源黑体（简体中文）
-      weight: 400                   # 字重：常规（Regular，400）
-      italic: false                 # 非斜体
-    id: cn_font                     # 字体唯一ID
-    size: 36                        # 字号：36
-    glyphs: ${allowed_characters}   # 只加载指定字符
-    ignore_missing_glyphs: true     # 忽略字体中缺失的字符，不报错
+      type: gfonts
+      family: "Noto Sans SC"
+      weight: 400
+      italic: false
+    id: cn_font
+    size: 36
+    glyphs: ${allowed_characters}
+    ignore_missing_glyphs: true
   - file:
       type: gfonts
       family: "Noto Sans SC"
@@ -77,31 +62,27 @@ font:
     glyphs: ${allowed_characters}
     ignore_missing_glyphs: true
 
-# SPI 总线
 spi:
-  clk_pin: GPIO14                 # SPI 时钟引脚
-  mosi_pin: GPIO12                # MOSI
-  miso_pin: GPIO13                # MISO
+  clk_pin: GPIO14
+  mosi_pin: GPIO12
+  miso_pin: GPIO13
 
-# I2C 总线
 i2c:
-  sda: GPIO21                     # I2C 数据线
-  scl: GPIO22                     # I2C 时钟线
+  sda: GPIO21
+  scl: GPIO22
 
-# 显示屏：M5Paper ePaper（基于 IT8951 驱动芯片）
 display:
   - platform: it8951e
     id: m5paper_display
     model: M5EPD
-    cs_pin: GPIO15                # 片选引脚
-    reset_pin: GPIO23             # 复位引脚
-    busy_pin: GPIO27              # 忙信号引脚
-    rotation: 0                   # 屏幕旋转角度，0是横向
-    reversed: False               # 不反转颜色
-    update_interval: never        # 不自动刷新，仅手动更新
-    auto_clear_enabled: false     # 必须设置为false以与LVGL配合使用
+    cs_pin: GPIO15
+    reset_pin: GPIO23
+    busy_pin: GPIO27
+    rotation: 0          # 横屏：960x540
+    reversed: False
+    update_interval: never
+    auto_clear_enabled: false
 
-# 触摸屏：GT911 电容触摸芯片
 touchscreen:
   - platform: gt911
     display: m5paper_display
@@ -117,46 +98,40 @@ touchscreen:
               lambda: return touch.x < 180 && touch.y >= 80 && touch.y <= 160;
             then:
               - lvgl.page.show: welcome_page
-
         - if:
             condition:
               lambda: return touch.x < 180 && touch.y >= 180 && touch.y <= 260;
             then:
               - lvgl.page.show: environment_page
 
-# 时间同步配置
 time:
-  - platform: homeassistant       # 从 Home Assistant 获取网络时间
+  - platform: homeassistant
     id: homeassistant_time
-    timezone: Asia/Shanghai        # 时区设置
+    timezone: Asia/Shanghai
     on_time_sync:
-      - bm8563.write_time         # 时间同步成功后，写入 RTC （BM8563）
-  - platform: bm8563              # 使用 BM8563 实时时钟（I2C 接口）
+      - bm8563.write_time
+  - platform: bm8563
     id: rtc_time
     on_time:
-      - seconds: 0                # 每整分钟（秒=0）触发
+      - seconds: 0
         then:
-          - lvgl.update            # 刷新LVGL显示新时间
+          - lvgl.update
 
-# M5Paper 电源管理（控制主电/电池切换）
 m5paper:
-  battery_power_pin: GPIO5        # 电池供电使能引脚
-  main_power_pin: GPIO2           # 外部电源检测引脚
+  battery_power_pin: GPIO5
+  main_power_pin: GPIO2
 
-# 传感器配置
 sensor:
-  # 电池电压检测（通过 ADC 读取）
   - platform: adc
-    disabled_by_default: true                    # 默认不在 HA 中显示
-    pin: GPIO35                                  # ADC 引脚
+    disabled_by_default: true
+    pin: GPIO35
     name: ${device_name} battery voltage
     id: m5paper_battery_voltage
     update_interval: 60s
-    attenuation: 12db                            # 使用 12dB 衰减（支持最高 ~3.9V 输入）
+    attenuation: 12db
     filters:
-      - multiply: 2                              # 分压电阻比为 1:1，所以乘以 2 得到真实电压
-  
-  # SHT30温湿度传感器（I2C 地址 0x44）
+      - multiply: 2
+
   - platform: sht3xd
     temperature:
       name: ${device_name} temperature
@@ -172,8 +147,7 @@ sensor:
       icon: mdi:water-percent
     address: 0x44
     update_interval: 10s
-  
-  # 电池电量百分比（基于电压计算）
+
   - platform: template
     name: ${device_name} battery level
     id: m5paper_battery_level
@@ -183,65 +157,59 @@ sensor:
     icon: mdi:battery-high
     update_interval: 60s
     lambda: |-
-      constexpr float min_level = 3.52;   // 电池空载截止电压（约 0%）
-      constexpr float max_level = 4.15;   // 电池满电电压（约 100%）
+      constexpr float min_level = 3.52;
+      constexpr float max_level = 4.15;
       return ((id(m5paper_battery_voltage).state - min_level) / (max_level - min_level)) * 100.00;
     filters:
       - clamp:
           min_value: 0
           max_value: 100
 
-# LVGL 配置
-# LVGL 配置（专为 M5Paper ePaper 优化）
+# LVGL 配置（横屏 960x540，白底黑字）
 lvgl:
   displays:
     - m5paper_display
   touchscreens:
     - gt911_touchscreen
   update_when_display_idle: true
-  
-  # 全局样式：白底黑字
-  default_font: cn_font
   color:
-    primary: 0x000000    # 主色：黑色
-    background: 0xFFFFFF # 背景：白色
+    primary: 0x000000      # 黑色文字
+    background: 0xFFFFFF   # 白色背景
+  default_font: cn_font
 
   bottom_layer:
-    bg_color: 0xFFFFFF   # 底层背景必须白色
+    bg_color: 0xFFFFFF     # 底层必须白色
 
   pages:
     # ===== 页面1：欢迎 =====
     - id: welcome_page
       widgets:
-        # 左侧菜单容器（180px 宽）
+        # 左侧菜单（180px 宽）
         - container:
             x: 0
             y: 0
             width: 180
-            height: 100%
-            bg_color: 0xFFFFFF  # 菜单也用白底（可加边框区分）
+            height: 540
+            bg_color: 0xFFFFFF
             border_width: 1
-            border_color: 0xCCCCCC
+            border_color: 0xDDDDDD
             widgets:
               - label:
-                  x: 90  # 180/2 = 90，居中
+                  x: 90    # 180/2
                   y: 100
                   text: "欢迎"
                   text_color: 0x000000
-                  text_font: cn_font
                   align: TOP_MID
-
               - label:
                   x: 90
                   y: 200
                   text: "环境"
                   text_color: 0x000000
-                  text_font: cn_font
                   align: TOP_MID
 
-        # 右侧内容区（从 x=180 开始）
+        # 右侧内容（从 x=180 开始，总宽 780）
         - label:
-            x: 400  # (180 + 540)/2 ≈ 360，但 M5Paper 分辨率是 540x960？需确认
+            x: 570   # 180 + (960-180)/2 = 570
             y: 50
             text: "你好，M5Paper！"
             text_color: 0x000000
@@ -250,7 +218,7 @@ lvgl:
 
         - label:
             id: battery_label
-            x: 400
+            x: 570
             y: 150
             text: !lambda |-
               float v_bat = id(m5paper_battery_voltage).state;
@@ -263,17 +231,15 @@ lvgl:
                 return "--%";
               }
             text_color: 0x000000
-            text_font: cn_font
             align: TOP_MID
 
         - label:
             id: time_label
-            x: 400
+            x: 570
             y: 220
             text: !lambda |-
               return id(rtc_time).now().strftime("%Y-%m-%d %H:%M");
             text_color: 0x000000
-            text_font: cn_font
             align: TOP_MID
 
     # ===== 页面2：环境 =====
@@ -284,29 +250,26 @@ lvgl:
             x: 0
             y: 0
             width: 180
-            height: 100%
+            height: 540
             bg_color: 0xFFFFFF
             border_width: 1
-            border_color: 0xCCCCCC
+            border_color: 0xDDDDDD
             widgets:
               - label:
                   x: 90
                   y: 100
                   text: "欢迎"
                   text_color: 0x000000
-                  text_font: cn_font
                   align: TOP_MID
-
               - label:
                   x: 90
                   y: 200
                   text: "环境"
                   text_color: 0x000000
-                  text_font: cn_font
                   align: TOP_MID
 
         - label:
-            x: 400
+            x: 570
             y: 80
             text: "环境信息"
             text_color: 0x000000
@@ -315,17 +278,16 @@ lvgl:
 
         - label:
             id: env_info_label
-            x: 400
+            x: 570
             y: 180
             text: !lambda |-
               if (!isnan(id(m5paper_temperature).state) && !isnan(id(m5paper_humidity).state)) {
-                char buffer[50];
-                sprintf(buffer, "温度：%.1f℃  湿度：%.1f%%", 
-                        id(m5paper_temperature).state, id(m5paper_humidity).state);
+                char buffer[60];
+                snprintf(buffer, sizeof(buffer), "温度：%.1f℃  湿度：%.1f%%",
+                         id(m5paper_temperature).state, id(m5paper_humidity).state);
                 return std::string(buffer);
               } else {
                 return "温湿度：--";
               }
             text_color: 0x000000
-            text_font: cn_font
             align: TOP_MID
