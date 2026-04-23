@@ -178,96 +178,127 @@ lvgl:
     - gt911_touchscreen
   update_when_display_idle: true
   default_font: cn_font
+  # 1. 全局主题：设置主题为浅色模式，白底黑字
+  theme:
+    dark_mode: false  # 这会全局应用浅色/亮色主题
+
+  # 2. 样式定义：创建可复用的样式
+  style_definitions:
+    - id: menu_style
+      bg_color: 0xFFFFFF   # 白色背景
+      text_color: 0x000000 # 黑色文字
+    - id: content_style
+      bg_color: 0xFFFFFF
+      text_color: 0x000000
+      border_side: LEFT    # 在内容区左侧加一条分割线 (可选)
+      border_color: 0xCCCCCC
+      border_width: 1
+      pad_all: 15           # 内容区内边距
 
   pages:
     # ===== 页面1：欢迎 =====
     - id: welcome_page
+      # 使用水平Flex布局将屏幕分为左(菜单)右(内容)两栏
+      layout: 
+        type: FLEX
+        flex_flow: ROW     # 让子控件水平排列
       widgets:
-        # 左侧菜单：直接放 label，不套 container（避免容器背景干扰）
-        - label:
-            x: 60       # 距左 60px，确保完整显示“欢迎”二字（字体宽约80-100px）
-            y: 100
-            text: "欢迎"
-            text_color: 0x000000   # 必须黑字
-            align: TOP_LEFT        # 左对齐更安全
+        # --- 左侧菜单栏 ---
+        # 用一个容器包裹菜单项，便于统一设置样式
+        - obj: 
+            id: left_menu
+            width: 150        # 给菜单栏一个固定宽度
+            height: 100%      # 高度充满父容器
+            styles: menu_style
+            layout:
+              type: FLEX
+              flex_flow: COLUMN  # 菜单项垂直排列
+              pad_all: 20
+            widgets:
+              - label:
+                  text: "欢迎"
+                  styles: menu_style
+              - label:
+                  text: "环境"
+                  styles: menu_style
 
-        - label:
-            x: 60
-            y: 200
-            text: "环境"
-            text_color: 0x000000
-            align: TOP_LEFT
+        # --- 右侧内容区 ---
+        # 用另一个容器包裹内容，它利用Flex布局的flex_grow占满剩余空间
+        - obj:
+            id: right_content
+            height: 100%
+            styles: content_style
+            flex_grow: 1      # 占据除了左侧菜单栏外的所有剩余水平空间
+            layout:
+              type: FLEX
+              flex_flow: COLUMN_WRAP # 内容垂直排列，并自动换行以防万一
+              pad_all: 30
+            widgets:
+              - label:
+                  text: "你好，M5Paper！"
+                  text_font: big_font
+                  text_color: 0x000000
+              - label:
+                  id: battery_label
+                  text: !lambda |-
+                    float v = id(m5paper_battery_voltage).state;
+                    if (!isnan(v)) {
+                      float pct = (v - 3.52f) / (4.15f - 3.52f) * 100.0f;
+                      return to_string((int)clamp(pct, 0.0f, 100.0f)) + "%";
+                    }
+                    return "--%";
+                  text_color: 0x000000
+              - label:
+                  id: time_label
+                  text: !lambda |-
+                    return id(rtc_time).now().strftime("%Y-%m-%d %H:%M");
+                  text_color: 0x000000
 
-        # 右侧内容：居中于右侧区域（180 ~ 960）
-        - label:
-            x: 570      # (180 + 960) / 2 = 570
-            y: 50
-            text: "你好，M5Paper！"
-            text_color: 0x000000
-            text_font: big_font
-            align: TOP_MID
-
-        - label:
-            id: battery_label
-            x: 570
-            y: 150
-            text: !lambda |-
-              float v = id(m5paper_battery_voltage).state;
-              if (!isnan(v)) {
-                float pct = (v - 3.52f) / (4.15f - 3.52f) * 100.0f;
-                return to_string((int)clamp(pct, 0.0f, 100.0f)) + "%";
-              }
-              return "--%";
-            text_color: 0x000000
-            align: TOP_MID
-
-        - label:
-            id: time_label
-            x: 570
-            y: 220
-            text: !lambda |-
-              return id(rtc_time).now().strftime("%Y-%m-%d %H:%M");
-            text_color: 0x000000
-            align: TOP_MID
-
-    # ===== 页面2：环境 =====
+    # ===== 页面2：环境 (结构同上) =====
     - id: environment_page
+      layout: 
+        type: FLEX
+        flex_flow: ROW
       widgets:
-        # 左侧菜单（同上）
-        - label:
-            x: 60
-            y: 100
-            text: "欢迎"
-            text_color: 0x000000
-            align: TOP_LEFT
-
-        - label:
-            x: 60
-            y: 200
-            text: "环境"
-            text_color: 0x000000
-            align: TOP_LEFT
-
-        - label:
-            x: 570
-            y: 80
-            text: "环境信息"
-            text_color: 0x000000
-            text_font: big_font
-            align: TOP_MID
-
-        - label:
-            id: env_info_label
-            x: 570
-            y: 180
-            text: !lambda |-
-              auto t = id(m5paper_temperature).state;
-              auto h = id(m5paper_humidity).state;
-              if (!isnan(t) && !isnan(h)) {
-                char buf[50];
-                snprintf(buf, sizeof(buf), "温度：%.1f℃\n湿度：%.1f%%", t, h);
-                return std::string(buf);
-              }
-              return "温湿度：--";
-            text_color: 0x000000
-            align: TOP_MID
+        - obj: 
+            id: left_menu2
+            width: 150
+            height: 100%
+            styles: menu_style
+            layout:
+              type: FLEX
+              flex_flow: COLUMN
+              pad_all: 20
+            widgets:
+              - label:
+                  text: "欢迎"
+                  styles: menu_style
+              - label:
+                  text: "环境"
+                  styles: menu_style
+        - obj:
+            id: right_content2
+            height: 100%
+            styles: content_style
+            flex_grow: 1
+            layout:
+              type: FLEX
+              flex_flow: COLUMN_WRAP
+              pad_all: 30
+            widgets:
+              - label:
+                  text: "环境信息"
+                  text_font: big_font
+                  text_color: 0x000000
+              - label:
+                  id: env_info_label
+                  text: !lambda |-
+                    auto t = id(m5paper_temperature).state;
+                    auto h = id(m5paper_humidity).state;
+                    if (!isnan(t) && !isnan(h)) {
+                      char buf[64];
+                      snprintf(buf, sizeof(buf), "温度：%.1f℃\n湿度：%.1f%%", t, h);
+                      return std::string(buf);
+                    }
+                    return "温湿度：--";
+                  text_color: 0x000000
