@@ -105,6 +105,25 @@ touchscreen:
       swap_xy: true
       mirror_x: false
       mirror_y: true
+    on_touch:
+      then:
+        - lambda: |-
+            // 获取触摸坐标（已变换）
+            int x = touch.x;
+            int y = touch.y;
+
+            const int menu_width = 180;
+
+            // 只响应左侧菜单区域
+            if (x < menu_width) {
+              if (y >= 80 && y <= 160) {
+                // 点击"欢迎"区域
+                lvgl.page.show: welcome_page
+              } else if (y >= 180 && y <= 260) {
+                // 点击"环境"区域
+                lvgl.page.show: environment_page
+              }
+            }
 
 # 时间同步配置
 time:
@@ -312,37 +331,3 @@ lvgl:
             text_align: CENTER
             align: TOP_MID
   
-  # 触摸事件处理
-  on_boot:
-    then:
-      - bm8563.read_time:
-          id: rtc_time              # 从 RTC 读取当前时间
-
-# 触摸屏事件处理
-touchscreen:
-  - platform: gt911
-    display: m5paper_display
-    id: gt911_touchscreen
-    transform:
-      swap_xy: true
-      mirror_x: false
-      mirror_y: true
-    on_touch:
-      then:
-        - lambda: |-
-            // 获取触摸坐标（已变换）
-            int x = touch.x;
-            int y = touch.y;
-
-            const int menu_width = 180;
-
-            // 只响应左侧菜单区域
-            if (x < menu_width) {
-              if (y >= 80 && y <= 160) {
-                // 点击"欢迎"区域
-                lvgl.page.show: welcome_page
-              } else if (y >= 180 && y <= 260) {
-                // 点击"环境"区域
-                lvgl.page.show: environment_page
-              }
-            }
