@@ -178,42 +178,37 @@ lvgl:
     - gt911_touchscreen
   update_when_display_idle: true
   default_font: cn_font
-  # 1. 全局主题：设置主题为浅色模式，白底黑字
   theme:
-    dark_mode: false  # 这会全局应用浅色/亮色主题
+    dark_mode: false
 
-  # 2. 样式定义：创建可复用的样式
   style_definitions:
     - id: menu_style
-      bg_color: 0xFFFFFF   # 白色背景
-      text_color: 0x000000 # 黑色文字
+      bg_color: 0xFFFFFF
+      text_color: 0x000000
     - id: content_style
       bg_color: 0xFFFFFF
       text_color: 0x000000
-      border_side: LEFT    # 在内容区左侧加一条分割线 (可选)
+      border_side: LEFT
       border_color: 0xCCCCCC
       border_width: 1
-      pad_all: 15           # 内容区内边距
+      pad_all: 15
 
   pages:
     # ===== 页面1：欢迎 =====
     - id: welcome_page
-      # 使用水平Flex布局将屏幕分为左(菜单)右(内容)两栏
-      layout: 
+      layout:
         type: FLEX
-        flex_flow: ROW     # 让子控件水平排列
+        flex_flow: ROW
       widgets:
-        # --- 左侧菜单栏 ---
-        # 用一个容器包裹菜单项，便于统一设置样式
-        - obj: 
+        - obj:
             id: left_menu
-            width: 150        # 给菜单栏一个固定宽度
-            height: 100%      # 高度充满父容器
+            width: 150
+            height: 100%
             styles: menu_style
             layout:
               type: FLEX
-              flex_flow: COLUMN  # 菜单项垂直排列
-              pad_all: 20
+              flex_flow: COLUMN
+              pad_row: 20          # 列布局中，用 pad_row 控制垂直间距
             widgets:
               - label:
                   text: "欢迎"
@@ -222,17 +217,15 @@ lvgl:
                   text: "环境"
                   styles: menu_style
 
-        # --- 右侧内容区 ---
-        # 用另一个容器包裹内容，它利用Flex布局的flex_grow占满剩余空间
         - obj:
             id: right_content
             height: 100%
             styles: content_style
-            flex_grow: 1      # 占据除了左侧菜单栏外的所有剩余水平空间
+            flex_grow: 1
             layout:
               type: FLEX
-              flex_flow: COLUMN_WRAP # 内容垂直排列，并自动换行以防万一
-              pad_all: 30
+              flex_flow: COLUMN_WRAP
+              pad_row: 30          # 同上，控制内容间垂直间距
             widgets:
               - label:
                   text: "你好，M5Paper！"
@@ -254,13 +247,13 @@ lvgl:
                     return id(rtc_time).now().strftime("%Y-%m-%d %H:%M");
                   text_color: 0x000000
 
-    # ===== 页面2：环境 (结构同上) =====
+    # ===== 页面2：环境 (对应修改) =====
     - id: environment_page
-      layout: 
+      layout:
         type: FLEX
         flex_flow: ROW
       widgets:
-        - obj: 
+        - obj:
             id: left_menu2
             width: 150
             height: 100%
@@ -268,7 +261,7 @@ lvgl:
             layout:
               type: FLEX
               flex_flow: COLUMN
-              pad_all: 20
+              pad_row: 20
             widgets:
               - label:
                   text: "欢迎"
@@ -276,6 +269,7 @@ lvgl:
               - label:
                   text: "环境"
                   styles: menu_style
+
         - obj:
             id: right_content2
             height: 100%
@@ -284,7 +278,7 @@ lvgl:
             layout:
               type: FLEX
               flex_flow: COLUMN_WRAP
-              pad_all: 30
+              pad_row: 30
             widgets:
               - label:
                   text: "环境信息"
