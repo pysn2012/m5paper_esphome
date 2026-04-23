@@ -13,6 +13,11 @@ esphome:
   friendly_name: ${friendly_name}
   min_version: 2025.5.0               # 要求的最低 ESPHome 版本
   name_add_mac_suffix: true           # 在设备名后附加 MAC 地址，避免多设备冲突
+  on_boot:
+    - priority: 600                   # 高优先级
+      then:
+        - bm8563.read_time:
+            id: rtc_time              # 从 RTC 读取当前时间
 
 esp32:
   board: m5stack_paper
@@ -187,62 +192,66 @@ sensor:
           max_value: 100
 
 # LVGL 配置
+# LVGL 配置（专为 M5Paper ePaper 优化）
 lvgl:
   displays:
     - m5paper_display
   touchscreens:
     - gt911_touchscreen
-  update_when_display_idle: true  # 对于ePaper显示器，只在空闲时更新
+  update_when_display_idle: true
   
-  # 底层背景
+  # 全局样式：白底黑字
+  default_font: cn_font
+  color:
+    primary: 0x000000    # 主色：黑色
+    background: 0xFFFFFF # 背景：白色
+
   bottom_layer:
-    bg_color: 0xFFFFFF  # 白色背景
-    
-  # 页面配置
+    bg_color: 0xFFFFFF   # 底层背景必须白色
+
   pages:
     # ===== 页面1：欢迎 =====
     - id: welcome_page
       widgets:
-        # 左侧菜单区域
+        # 左侧菜单容器（180px 宽）
         - container:
             x: 0
             y: 0
             width: 180
             height: 100%
-            bg_color: 0xE0E0E0  # 浅灰色菜单背景
+            bg_color: 0xFFFFFF  # 菜单也用白底（可加边框区分）
+            border_width: 1
+            border_color: 0xCCCCCC
             widgets:
               - label:
-                  x: 50%
+                  x: 90  # 180/2 = 90，居中
                   y: 100
                   text: "欢迎"
+                  text_color: 0x000000
                   text_font: cn_font
-                  text_align: CENTER
                   align: TOP_MID
-              
+
               - label:
-                  x: 50%
+                  x: 90
                   y: 200
                   text: "环境"
+                  text_color: 0x000000
                   text_font: cn_font
-                  text_align: CENTER
                   align: TOP_MID
-        
-        # 右侧内容区域
+
+        # 右侧内容区（从 x=180 开始）
         - label:
-            x: 230  # 菜单宽度(180) + 间距(10) + 内容区一半
+            x: 400  # (180 + 540)/2 ≈ 360，但 M5Paper 分辨率是 540x960？需确认
             y: 50
-            width: 320  # 内容区宽度
             text: "你好，M5Paper！"
+            text_color: 0x000000
             text_font: big_font
-            text_align: CENTER
             align: TOP_MID
-        
-        # 电量显示
+
         - label:
             id: battery_label
-            x: 230
+            x: 400
             y: 150
-            width: 320
             text: !lambda |-
               float v_bat = id(m5paper_battery_voltage).state;
               if (!isnan(v_bat)) {
@@ -253,65 +262,61 @@ lvgl:
               } else {
                 return "--%";
               }
+            text_color: 0x000000
             text_font: cn_font
-            text_align: CENTER
             align: TOP_MID
-        
-        # 时间显示
+
         - label:
             id: time_label
-            x: 230
+            x: 400
             y: 220
-            width: 320
             text: !lambda |-
               return id(rtc_time).now().strftime("%Y-%m-%d %H:%M");
+            text_color: 0x000000
             text_font: cn_font
-            text_align: CENTER
             align: TOP_MID
-    
+
     # ===== 页面2：环境 =====
     - id: environment_page
       widgets:
-        # 左侧菜单区域
+        # 左侧菜单（同上）
         - container:
             x: 0
             y: 0
             width: 180
             height: 100%
-            bg_color: 0xE0E0E0  # 浅灰色菜单背景
+            bg_color: 0xFFFFFF
+            border_width: 1
+            border_color: 0xCCCCCC
             widgets:
               - label:
-                  x: 50%
+                  x: 90
                   y: 100
                   text: "欢迎"
+                  text_color: 0x000000
                   text_font: cn_font
-                  text_align: CENTER
                   align: TOP_MID
-              
+
               - label:
-                  x: 50%
+                  x: 90
                   y: 200
                   text: "环境"
+                  text_color: 0x000000
                   text_font: cn_font
-                  text_align: CENTER
                   align: TOP_MID
-        
-        # 右侧内容区域
+
         - label:
-            x: 230
+            x: 400
             y: 80
-            width: 320
             text: "环境信息"
+            text_color: 0x000000
             text_font: big_font
-            text_align: CENTER
             align: TOP_MID
-        
-        # 温湿度显示
+
         - label:
             id: env_info_label
-            x: 230
+            x: 400
             y: 180
-            width: 320
             text: !lambda |-
               if (!isnan(id(m5paper_temperature).state) && !isnan(id(m5paper_humidity).state)) {
                 char buffer[50];
@@ -321,7 +326,6 @@ lvgl:
               } else {
                 return "温湿度：--";
               }
+            text_color: 0x000000
             text_font: cn_font
-            text_align: CENTER
             align: TOP_MID
-  
