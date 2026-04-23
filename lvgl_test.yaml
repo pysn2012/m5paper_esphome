@@ -10,6 +10,11 @@ esphome:
   friendly_name: ${friendly_name}
   min_version: 2025.5.0
   name_add_mac_suffix: true
+  on_boot:
+    - priority: 600                   # 高优先级
+      then:
+        - bm8563.read_time:
+            id: rtc_time              # 从 RTC 读取当前时间
 
 esp32:
   board: m5stack_paper
@@ -172,19 +177,17 @@ lvgl:
   touchscreens:
     - gt911_touchscreen
   update_when_display_idle: true
-  color:
-    primary: 0x000000      # 黑色文字
-    background: 0xFFFFFF   # 白色背景
   default_font: cn_font
+  bg_color: 0xFFFFFF  # 全局背景：白色
 
   bottom_layer:
-    bg_color: 0xFFFFFF     # 底层必须白色
+    bg_color: 0xFFFFFF
 
   pages:
     # ===== 页面1：欢迎 =====
     - id: welcome_page
       widgets:
-        # 左侧菜单（180px 宽）
+        # 左侧菜单容器（180px 宽）
         - container:
             x: 0
             y: 0
@@ -195,7 +198,7 @@ lvgl:
             border_color: 0xDDDDDD
             widgets:
               - label:
-                  x: 90    # 180/2
+                  x: 90
                   y: 100
                   text: "欢迎"
                   text_color: 0x000000
@@ -207,9 +210,9 @@ lvgl:
                   text_color: 0x000000
                   align: TOP_MID
 
-        # 右侧内容（从 x=180 开始，总宽 780）
+        # 右侧内容区
         - label:
-            x: 570   # 180 + (960-180)/2 = 570
+            x: 570
             y: 50
             text: "你好，M5Paper！"
             text_color: 0x000000
