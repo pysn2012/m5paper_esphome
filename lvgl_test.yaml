@@ -83,31 +83,10 @@ display:
     cs_pin: GPIO15
     reset_pin: GPIO23
     busy_pin: GPIO27
-    rotation: 0          # 横屏：960x540
-    reversed: False
-    update_interval: never
+    rotation: 0                  # 横屏：960x540
+    reversed: False              # 不反转颜色
+    update_interval: never       # 不自动刷新
     auto_clear_enabled: false
-
-touchscreen:
-  - platform: gt911
-    display: m5paper_display
-    id: gt911_touchscreen
-    transform:
-      swap_xy: true
-      mirror_x: false
-      mirror_y: true
-    on_touch:
-      then:
-        - if:
-            condition:
-              lambda: return touch.x < 180 && touch.y >= 80 && touch.y <= 160;
-            then:
-              - lvgl.page.show: welcome_page
-        - if:
-            condition:
-              lambda: return touch.x < 180 && touch.y >= 180 && touch.y <= 260;
-            then:
-              - lvgl.page.show: environment_page
 
 time:
   - platform: homeassistant
@@ -170,129 +149,21 @@ sensor:
           min_value: 0
           max_value: 100
 
-# LVGL 配置（横屏 960x540，白底黑字）
+# LVGL 配置
 lvgl:
   displays:
     - m5paper_display
-  touchscreens:
-    - gt911_touchscreen
   update_when_display_idle: true
   default_font: cn_font
-  theme:
-    dark_mode: false
-
-  style_definitions:
-    - id: menu_style
-      bg_color: 0xFFFFFF
-      text_color: 0x000000
-    - id: content_style
-      bg_color: 0xFFFFFF
-      text_color: 0x000000
-      border_side: LEFT
-      border_color: 0xCCCCCC
-      border_width: 1
-      pad_all: 15
 
   pages:
-    # ===== 页面1：欢迎 =====
-    - id: welcome_page
-      layout:
-        type: FLEX
-        flex_flow: ROW
+    # ===== 页面：欢迎 =====
+    - id: main_page
       widgets:
-        - obj:
-            id: left_menu
-            width: 150
-            height: 100%
-            styles: menu_style
-            layout:
-              type: FLEX
-              flex_flow: COLUMN
-              pad_row: 20          # 列布局中，用 pad_row 控制垂直间距
-            widgets:
-              - label:
-                  text: "欢迎"
-                  styles: menu_style
-              - label:
-                  text: "环境"
-                  styles: menu_style
+        - label:
+            align: CENTER
+            text: 'Hello World!'
 
-        - obj:
-            id: right_content
-            height: 100%
-            styles: content_style
-            flex_grow: 1
-            layout:
-              type: FLEX
-              flex_flow: COLUMN_WRAP
-              pad_row: 30          # 同上，控制内容间垂直间距
-            widgets:
-              - label:
-                  text: "你好，M5Paper！"
-                  text_font: big_font
-                  text_color: 0x000000
-              - label:
-                  id: battery_label
-                  text: !lambda |-
-                    float v = id(m5paper_battery_voltage).state;
-                    if (!isnan(v)) {
-                      float pct = (v - 3.52f) / (4.15f - 3.52f) * 100.0f;
-                      return to_string((int)clamp(pct, 0.0f, 100.0f)) + "%";
-                    }
-                    return "--%";
-                  text_color: 0x000000
-              - label:
-                  id: time_label
-                  text: !lambda |-
-                    return id(rtc_time).now().strftime("%Y-%m-%d %H:%M");
-                  text_color: 0x000000
 
-    # ===== 页面2：环境 (对应修改) =====
-    - id: environment_page
-      layout:
-        type: FLEX
-        flex_flow: ROW
-      widgets:
-        - obj:
-            id: left_menu2
-            width: 150
-            height: 100%
-            styles: menu_style
-            layout:
-              type: FLEX
-              flex_flow: COLUMN
-              pad_row: 20
-            widgets:
-              - label:
-                  text: "欢迎"
-                  styles: menu_style
-              - label:
-                  text: "环境"
-                  styles: menu_style
 
-        - obj:
-            id: right_content2
-            height: 100%
-            styles: content_style
-            flex_grow: 1
-            layout:
-              type: FLEX
-              flex_flow: COLUMN_WRAP
-              pad_row: 30
-            widgets:
-              - label:
-                  text: "环境信息"
-                  text_font: big_font
-                  text_color: 0x000000
-              - label:
-                  id: env_info_label
-                  text: !lambda |-
-                    auto t = id(m5paper_temperature).state;
-                    auto h = id(m5paper_humidity).state;
-                    if (!isnan(t) && !isnan(h)) {
-                      char buf[64];
-                      snprintf(buf, sizeof(buf), "温度：%.1f℃\n湿度：%.1f%%", t, h);
-                      return std::string(buf);
-                    }
-                    return "温湿度：--";
-                  text_color: 0x000000
+            
