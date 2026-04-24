@@ -169,7 +169,7 @@ lvgl:
       widgets:
         # ===== 日期时间卡片 =====
         - obj:
-            id: device_card
+            id: date_card
             layout:
               type: grid
               grid_rows: [ content, content ]
