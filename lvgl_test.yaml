@@ -156,62 +156,85 @@ lvgl:
   update_when_display_idle: true
   default_font: cn_font
 
+  # 样式定义：可复用的样式
+  style_definitions:
+    - id: page_bg
+      bg_color: 0xFFFFFF       # 页面纯白背景
+      pad_all: 20              # 页面整体内边距
+
+    - id: card_style
+      bg_color: 0xF5F5F5       # 卡片淡灰背景，便于区分
+      border_side: FULL
+      border_color: 0xDDDDDD
+      border_width: 1
+      radius: 12               # 圆角卡片
+      pad_all: 16              # 卡片内边距
+
+    - id: big_label
+      text_color: 0x000000
+      text_font: big_font
+
+    - id: normal_label
+      text_color: 0x333333
+      text_font: cn_font
+
   pages:
-    # ===== 页面：欢迎 =====
     - id: main_page
-      width: 100%
-      height: 100%
-      
-      # 使用 Flex 列布局，自动排列下方各个卡片
+      styles: page_bg          # 页面底色和内边距
       layout:
-        type: flex
+        type: FLEX
         flex_flow: COLUMN
-        pad_row: 8
-        pad_column: 8
+        pad_row: 10            # 卡片之间的垂直间距
+        pad_column: 0
 
       widgets:
         # ===== 日期时间卡片 =====
         - obj:
             id: date_card
+            width: 100%        # 宽度撑满页面
+            height: 100px      # 给卡片一个固定高度
+            styles: card_style
             layout:
-              type: grid
-              grid_rows: [ content, content ]
-              grid_columns: [ fr(1) ]
-              pad_row: 8
-              pad_column: 12
-
+              type: GRID
+              grid_rows: [fr(1), fr(1)]     # 两行等分
+              grid_columns: [fr(1)]         # 一列
+              pad_row: 4
             widgets:
               - label:
                   id: date_label
                   text: "2026年01月01日 星期四"
-
+                  styles: big_label
+                  align: CENTER             # 在网格单元内居中
               - label:
                   id: time_label
                   text: "00:00"
+                  styles: big_label
+                  align: CENTER
 
         # ===== 本机信息卡片 =====
         - obj:
             id: device_card
+            width: 100%
+            height: 80px       # 给卡片一个固定高度
+            styles: card_style
             layout:
-              type: grid
-              grid_rows: [ content ]
-              grid_columns: [ fr(1), fr(1), fr(1) ]
-              pad_row: 8
-              pad_column: 12
-
+              type: GRID
+              grid_rows: [fr(1)]            # 一行
+              grid_columns: [fr(1), fr(1), fr(1)]  # 三等分列
+              pad_column: 8
             widgets:
               - label:
                   id: device_temp
                   text: "温度: 25.1℃"
-
+                  styles: normal_label
+                  align: CENTER
               - label:
                   id: device_humi
                   text: "湿度: 60.0%"
-
+                  styles: normal_label
+                  align: CENTER
               - label:
                   id: device_voltage
                   text: "电压: 4.20V"
-
-
-
-            
+                  styles: normal_label
+                  align: CENTER
