@@ -84,7 +84,7 @@ display:
     reset_pin: GPIO23
     busy_pin: GPIO27
     rotation: 0                  # 横屏：960x540
-    reversed: False              # 不反转颜色
+    reversed: true              # 不反转颜色
     update_interval: never       # 不自动刷新
     auto_clear_enabled: false
 
