@@ -156,6 +156,10 @@ lvgl:
   update_when_display_idle: true
   default_font: cn_font
 
+  # 全局主题：浅色模式（白底黑字）
+  theme:
+    dark_mode: false
+
   # 样式定义：可复用的样式
   style_definitions:
     - id: page_bg
@@ -164,7 +168,11 @@ lvgl:
 
     - id: card_style
       bg_color: 0xF5F5F5       # 卡片淡灰背景，便于区分
-      border_side: FULL
+      border_side:             # 四个方向都显示，实现全边框
+        - TOP
+        - BOTTOM
+        - LEFT
+        - RIGHT
       border_color: 0xDDDDDD
       border_width: 1
       radius: 12               # 圆角卡片
@@ -185,7 +193,6 @@ lvgl:
         type: FLEX
         flex_flow: COLUMN
         pad_row: 10            # 卡片之间的垂直间距
-        pad_column: 0
 
       widgets:
         # ===== 日期时间卡片 =====
@@ -198,13 +205,13 @@ lvgl:
               type: GRID
               grid_rows: [fr(1), fr(1)]     # 两行等分
               grid_columns: [fr(1)]         # 一列
-              pad_row: 4
+              pad_row: 4                    # 日期和时间之间的间距
             widgets:
               - label:
                   id: date_label
                   text: "2026年01月01日 星期四"
                   styles: big_label
-                  align: CENTER             # 在网格单元内居中
+                  align: CENTER
               - label:
                   id: time_label
                   text: "00:00"
@@ -221,7 +228,7 @@ lvgl:
               type: GRID
               grid_rows: [fr(1)]            # 一行
               grid_columns: [fr(1), fr(1), fr(1)]  # 三等分列
-              pad_column: 8
+              pad_column: 8                 # 信息列之间的间距
             widgets:
               - label:
                   id: device_temp
