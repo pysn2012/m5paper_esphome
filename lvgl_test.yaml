@@ -159,36 +159,9 @@ lvgl:
   pages:
     # ===== 页面：欢迎 =====
     - id: main_page
-    
-      # 使用 Flex 列布局，自动排列下方各个卡片
-      layout:
-        type: flex
-        flex_flow: COLUMN
-        pad_row: 8
-        pad_column: 8
-
+      width: 100%
+      height: 100%
       widgets:
-        # ===== 日期时间卡片 =====
-        - obj:
-            id: date_card
-            width: 100%
-            height: 100px
-            layout:
-              type: grid
-              grid_rows: [ content, content ]
-              grid_columns: [ fr(1) ]
-              pad_row: 8
-              pad_column: 12
-
-            widgets:
-              - label:
-                  id: date_label
-                  text: "2026年01月01日 星期四"
-
-              - label:
-                  id: time_label
-                  text: "00:00"
-
         # ===== 本机信息卡片 =====
         - obj:
             id: device_card
@@ -198,22 +171,22 @@ lvgl:
               type: grid
               grid_rows: [ content ]
               grid_columns: [ fr(1), fr(1), fr(1) ]
-              pad_row: 8
-              pad_column: 12
+              pad_row: 8px
+              pad_column: 12px
 
             widgets:
               - label:
                   id: device_temp
                   text: "温度: 25.1℃"
-
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 0
               - label:
                   id: device_humi
                   text: "湿度: 60.0%"
-
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 1
               - label:
                   id: device_voltage
                   text: "电压: 4.20V"
-
-
-
-            
+                  grid_cell_row_pos: 0
+                  grid_cell_column_pos: 2                  
